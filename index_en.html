@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPS Tester - Professional Performance Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --primary-dark: #0099cc;
+            --secondary: #ff00ff;
+            --success: #00ff00;
+            --warning: #ffaa00;
+            --danger: #ff3333;
+            --dark: #0a0e27;
+            --darker: #050810;
+            --light: #1a1f3a;
+            --text: #e0e0ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            background: rgba(10, 14, 39, 0.95);
+            border-bottom: 2px solid var(--primary);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar h1 {
+            font-size: 28px;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: var(--dark);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .btn.active {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 80px);
+            text-align: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .welcome-screen h2 {
+            font-size: 48px;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary);
+        }
+
+        .welcome-screen p {
+            font-size: 18px;
+            margin-bottom: 2rem;
+            color: var(--text);
+            max-width: 600px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+            max-width: 1000px;
+        }
+
+        .feature {
+            background: var(--light);
+            padding: 2rem;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .feature:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        .feature h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 20px;
+        }
+
+        .menu-screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .category-banner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            border-left: 4px solid;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .easy-banner {
+            background: rgba(0, 255, 0, 0.1);
+            color: #00ff00;
+            border-left-color: #00ff00;
+        }
+
+        .medium-banner {
+            background: rgba(255, 170, 0, 0.1);
+            color: #ffaa00;
+            border-left-color: #ffaa00;
+        }
+
+        .hard-banner {
+            background: rgba(255, 51, 51, 0.1);
+            color: #ff3333;
+            border-left-color: #ff3333;
+        }
+
+        .extreme-banner {
+            background: rgba(255, 0, 255, 0.15);
+            color: #ff00ff;
+            border-left-color: #ff00ff;
+            border: 2px solid #ff00ff;
+            border-left: 4px solid #ff00ff;
+        }
+
+        .menu-card {
+            background: linear-gradient(135deg, var(--light) 0%, rgba(0, 212, 255, 0.05) 100%);
+            border: 2px solid var(--primary);
+            padding: 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+            transition: height 0.3s;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 30px var(--primary);
+            border-color: var(--secondary);
+        }
+
+        .menu-card:hover::before {
+            height: 6px;
+        }
+
+        .menu-card h3 {
+            font-size: 22px;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .menu-card p {
+            color: var(--text);
+            font-size: 13px;
+            margin-bottom: 0.75rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .difficulty {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 0.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1.5px solid;
+            position: relative;
+            z-index: 1;
+        }
+
+        .difficulty.easy { 
+            background: rgba(0, 255, 0, 0.25); 
+            color: #00ff00;
+            border-color: #00ff00;
+            box-shadow: 0 0 12px rgba(0, 255, 0, 0.4);
+        }
+
+        .difficulty.medium { 
+            background: rgba(255, 170, 0, 0.25); 
+            color: #ffaa00;
+            border-color: #ffaa00;
+            box-shadow: 0 0 12px rgba(255, 170, 0, 0.4);
+        }
+
+        .difficulty.hard { 
+            background: rgba(255, 51, 51, 0.25); 
+            color: #ff3333;
+            border-color: #ff3333;
+            box-shadow: 0 0 12px rgba(255, 51, 51, 0.4);
+        }
+
+        .difficulty.extreme { 
+            background: rgba(255, 0, 255, 0.3); 
+            color: #ff00ff;
+            border-color: #ff00ff;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.6);
+        }
+
+        .test-screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+            position: relative;
+        }
+
+        #crash-overlay {
+            animation: crashFadeIn 0.3s ease-in;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes crashFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            #crash-overlay {
+                padding: 15px;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .test-canvas {
+            background: var(--light);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            margin: 2rem 0;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .test-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .info-card {
+            background: var(--light);
+            padding: 1.5rem;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-label {
+            color: var(--text);
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .results-screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .score-section {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+        }
+
+        .performance-score {
+            font-size: 120px;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            line-height: 1;
+            margin: 1rem 0;
+        }
+
+        .score-label {
+            font-size: 24px;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .bottleneck {
+            font-size: 20px;
+            color: var(--warning);
+            margin-top: 1rem;
+        }
+
+        .warning-box {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid var(--danger);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .chart-wrapper {
+            background: var(--light);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .chart-wrapper h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 18px;
+        }
+
+        .recommendations {
+            background: var(--light);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .recommendations h3 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 22px;
+        }
+
+        .rec-item {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid var(--primary);
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .rec-item.good { border-left-color: var(--success); }
+        .rec-item.warning { border-left-color: var(--warning); }
+        .rec-item.critical { border-left-color: var(--danger); }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .history-container {
+            background: var(--light);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .history-date {
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .history-score {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .history-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .back-btn {
+            margin-bottom: 2rem;
+        }
+
+        .test-controls {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .test-controls button {
+            margin: 0.5rem;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 24px;
+            margin: 3rem 0 1.5rem 0;
+            padding: 15px 20px;
+            border-left: 5px solid;
+            border-bottom: 2px solid var(--primary);
+            background: rgba(0, 212, 255, 0.08);
+            border-radius: 5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .section-title:nth-of-type(1) {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.08);
+            color: #00ff00;
+        }
+
+        .section-title:nth-of-type(2) {
+            border-left-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.08);
+            color: #ffaa00;
+        }
+
+        .section-title:nth-of-type(3) {
+            border-left-color: #ff3333;
+            background: rgba(255, 51, 51, 0.08);
+            color: #ff3333;
+        }
+
+        .section-title:nth-of-type(4) {
+            border-left-color: #ff00ff;
+            background: rgba(255, 0, 255, 0.1);
+            color: #ff00ff;
+            border: 2px solid #ff00ff;
+        }
+
+        .warning-banner {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            color: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .welcome-screen h2 { font-size: 32px; }
+            .menu-grid { grid-template-columns: 1fr; }
+            .charts-container { grid-template-columns: 1fr; }
+            .performance-score { font-size: 60px; }
+            .navbar { flex-direction: column; gap: 1rem; }
+            .nav-buttons { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <h1>⚡ FPS TESTER</h1>
+        <div class="nav-buttons">
+            <button class="btn active" onclick="showScreen('welcome')">Home</button>
+            <button class="btn" onclick="showScreen('menu')">Tests</button>
+            <button class="btn" onclick="showScreen('history')">History</button>
+        </div>
+    </div>
+
+    <!-- Container -->
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" id="welcome-screen">
+            <h2>🎮 FPS TESTER</h2>
+            <p>Professional Gaming Performance Analysis Tool</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <h3>⚡ Real Tests</h3>
+                    <p>Run interactive performance tests from easy to extreme difficulty</p>
+                </div>
+                <div class="feature">
+                    <h3>📊 Analytics</h3>
+                    <p>Get detailed insights with charts and performance scores</p>
+                </div>
+                <div class="feature">
+                    <h3>🎯 Smart Recommendations</h3>
+                    <p>Personalized upgrade suggestions and bottleneck analysis</p>
+                </div>
+                <div class="feature">
+                    <h3>💾 History</h3>
+                    <p>Track your performance improvements over time</p>
+                </div>
+            </div>
+
+            <button class="btn" onclick="showScreen('menu')" style="margin-top: 2rem; padding: 1rem 2rem; font-size: 16px;">
+                Start Testing →
+            </button>
+        </div>
+
+        <!-- Menu Screen -->
+        <div class="menu-screen" id="menu-screen">
+            <h2 style="color: var(--primary); margin-bottom: 2rem;">Select Test Difficulty</h2>
+            
+            <div class="warning-banner">
+                <strong>⚠️ WARNING:</strong> Extreme difficulty tests can crash your computer. Monitor your system during testing!
+            </div>
+
+            <h3 class="section-title">🟢 EASY Tests (Recommended for beginners)</h3>
+            <div class="category-banner easy-banner">
+                <span>✓ Safe for all systems • Perfect for testing • Best for beginners</span>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="startTest('starfield')">
+                    <h3>⭐ Starfield</h3>
+                    <p>Smooth starfield effect - gentle performance test for all systems</p>
+                    <div class="difficulty easy">Easy</div>
+                </div>
+                <div class="menu-card" onclick="startTest('matrix-rain')">
+                    <h3>🌧️ Matrix Rain</h3>
+                    <p>Falling text characters - light text rendering performance test</p>
+                    <div class="difficulty easy">Easy</div>
+                </div>
+            </div>
+
+            <h3 class="section-title">🟡 MEDIUM Tests</h3>
+            <div class="category-banner medium-banner">
+                <span>⚡ Moderate stress • For average systems • Good benchmark</span>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="startTest('tunnel')">
+                    <h3>🌌 Tunnel Effect</h3>
+                    <p>3D tunnel with animated rings - moderate graphics stress</p>
+                    <div class="difficulty medium">Medium</div>
+                </div>
+                <div class="menu-card" onclick="startTest('polygon-rush')">
+                    <h3>🔷 Polygon Rush</h3>
+                    <p>Rotating polygons moving across screen - transformation test</p>
+                    <div class="difficulty medium">Medium</div>
+                </div>
+            </div>
+
+            <h3 class="section-title">🔴 HARD Tests</h3>
+            <div class="category-banner hard-banner">
+                <span>🔥 Intensive stress • For gaming PCs • Find bottlenecks</span>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="startTest('particle-storm')">
+                    <h3>🌪️ Particle Storm</h3>
+                    <p>Hundreds of animated particles - intensive rendering stress test</p>
+                    <div class="difficulty hard">Hard</div>
+                </div>
+                <div class="menu-card" onclick="startTest('fractal-tree')">
+                    <h3>🌳 Fractal Tree</h3>
+                    <p>Recursive fractal rendering - extreme CPU intensive test</p>
+                    <div class="difficulty hard">Hard</div>
+                </div>
+                <div class="menu-card" onclick="startTest('mandelbrot')">
+                    <h3>🎨 Mandelbrot Set</h3>
+                    <p>Mathematical fractal computation - heavy CPU and memory load</p>
+                    <div class="difficulty hard">Hard</div>
+                </div>
+            </div>
+
+            <h3 class="section-title">💜 EXTREME Tests (⚠️ CRITICAL - Can CRASH system!)</h3>
+            <div class="category-banner extreme-banner">
+                <span>☢️ DANGER: Can crash or freeze system • Only for experts • Use at your own risk!</span>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="if(confirm('This test can crash your system! Continue?')) startTest('particle-explosion')">
+                    <h3>💥 Particle Explosion</h3>
+                    <p>1000+ particles with physics simulation - EXTREME stress test</p>
+                    <div class="difficulty extreme">EXTREME</div>
+                </div>
+                <div class="menu-card" onclick="if(confirm('This test can crash your system! Continue?')) startTest('mega-mandelbrot')">
+                    <h3>🌀 Mega Mandelbrot</h3>
+                    <p>Ultra-detailed fractal with 500 iterations - CPU killer</p>
+                    <div class="difficulty extreme">EXTREME</div>
+                </div>
+                <div class="menu-card" onclick="if(confirm('This test can crash your system! Continue?')) startTest('mega-tunnel')">
+                    <h3>🌠 Mega Tunnel</h3>
+                    <p>100 rings at full resolution - graphics and memory intensive</p>
+                    <div class="difficulty extreme">EXTREME</div>
+                </div>
+                <div class="menu-card" onclick="if(confirm('WARNING: This WILL crash most systems! Continue at your own risk?')) startTest('combined-stress')">
+                    <h3>☢️ Combined Stress</h3>
+                    <p>ALL systems running simultaneously - system freeze/crash almost certain</p>
+                    <div class="difficulty extreme">EXTREME</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Screen -->
+        <div class="test-screen" id="test-screen">
+            <button class="btn back-btn" onclick="stopTest(); showScreen('menu')">← Back</button>
+            
+            <h2 id="test-name" style="color: var(--primary); margin-bottom: 1rem;">Test Running...</h2>
+            
+            <div class="test-canvas" id="test-canvas">
+                <canvas id="render-canvas" style="width: 100%; height: 100%;"></canvas>
+            </div>
+
+            <div class="test-controls">
+                <button class="btn" id="test-control-btn" onclick="stopTest()">⏹ Stop Test</button>
+            </div>
+
+            <div class="test-info">
+                <div class="info-card">
+                    <div class="info-label">Current FPS</div>
+                    <div class="info-value" id="current-fps">0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Average FPS</div>
+                    <div class="info-value" id="avg-fps">0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Min FPS</div>
+                    <div class="info-value" id="min-fps">0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Max FPS</div>
+                    <div class="info-value" id="max-fps">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen" id="results-screen">
+            <button class="btn back-btn" onclick="showScreen('menu')">← Back to Tests</button>
+            
+            <h2 id="results-title" style="color: var(--primary);">Test Results</h2>
+
+            <div class="score-section">
+                <div class="score-label">Performance Score</div>
+                <div class="performance-score" id="performance-score">0</div>
+                <div id="score-status" style="font-size: 20px; color: var(--primary);">Excellent</div>
+                <div class="bottleneck" id="bottleneck-info">Bottleneck: Balanced</div>
+            </div>
+
+            <div id="extreme-warning" class="warning-box" style="display: none;">
+                ⚠️ This test pushed your system to the limit! Monitor temperature!
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h3>FPS Over Time</h3>
+                    <canvas id="fps-chart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Performance Metrics</h3>
+                    <canvas id="metrics-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="recommendations" id="recommendations">
+                <h3>📋 Recommendations & Analysis</h3>
+                <div id="rec-list"></div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn" onclick="showScreen('menu')" style="padding: 1rem 2rem; font-size: 16px;">
+                    Run Another Test →
+                </button>
+            </div>
+        </div>
+
+        <!-- History Screen -->
+        <div id="history-screen" class="history-container" style="display: none;">
+            <button class="btn back-btn" onclick="showScreen('welcome')">← Back</button>
+            <h2 style="color: var(--primary); margin-bottom: 1.5rem;">📊 Test History</h2>
+            <div id="history-list"></div>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <button class="btn" onclick="clearHistory()" style="background: var(--danger); border-color: var(--danger);">
+                    Clear All History
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
