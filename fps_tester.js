@@ -6,6 +6,8 @@
  * - Canvas-based rendering (similar to Pygame)
  * - Dual-screen support (Test canvas + Statistics panel)
  * - WebSocket-ready for future server integration
+ * 
+ * Version: 2.1 - Enhanced with utility classes and monitoring
  */
 
 // ==========================
@@ -14,6 +16,8 @@
 
 const WINDOW_WIDTH = 1400;
 const WINDOW_HEIGHT = 900;
+const FPS_CAP = 300;
+const TARGET_FPS = 60;
 
 // Colors (RGB)
 const COLORS = {
@@ -27,16 +31,106 @@ const COLORS = {
   MAGENTA: [255, 0, 255],
   ORANGE: [255, 165, 0],
   PURPLE: [128, 0, 128],
+  DARK_GRAY: [30, 30, 30],
+  LIGHT_GRAY: [200, 200, 200],
 };
 
-// Global settings
+// Global settings with more options
 const GLOBAL_SETTINGS = {
   show_fps_rounded: true,
   show_fps_real: true,
   show_hints: true,
   show_mode_stats: true,
   show_results: true,
+  show_stability: true,
+  show_peaks: true,
 };
+
+// ==========================
+// PERFORMANCE MONITORING
+// ==========================
+
+/**
+ * Real-time performance monitor with history tracking
+ */
+class PerformanceMonitor {
+  constructor(historySize = 300) {
+    this.history = [];
+    this.maxHistory = historySize;
+    this.peakFps = 0;
+    this.lowestFps = Infinity;
+    this.startTime = Date.now();
+  }
+
+  record(fps) {
+    this.history.push(fps);
+    if (this.history.length > this.maxHistory) {
+      this.history.shift();
+    }
+    this.peakFps = Math.max(this.peakFps, fps);
+    this.lowestFps = Math.min(this.lowestFps, fps);
+  }
+
+  getAverage() {
+    if (this.history.length === 0) return 0;
+    return this.history.reduce((a, b) => a + b, 0) / this.history.length;
+  }
+
+  getStability() {
+    // Returns stability score 0-100 (higher = more stable)
+    if (this.history.length < 2) return 100;
+    
+    const avg = this.getAverage();
+    if (avg === 0) return 0;
+
+    const variance = this.history.reduce((sum, fps) => {
+      return sum + Math.pow(fps - avg, 2);
+    }, 0) / this.history.length;
+
+    const stability = Math.max(0, 100 - (Math.sqrt(variance) / avg * 50));
+    return Math.min(100, stability);
+  }
+
+  getStatistics() {
+    return {
+      average: this.getAverage(),
+      min: this.lowestFps === Infinity ? 0 : this.lowestFps,
+      max: this.peakFps,
+      stability: this.getStability(),
+    };
+  }
+
+  reset() {
+    this.history = [];
+    this.peakFps = 0;
+    this.lowestFps = Infinity;
+    this.startTime = Date.now();
+  }
+}
+
+/**
+ * Smooth frame rate limiter with adaptive timing
+ */
+class FrameRateLimiter {
+  constructor(targetFps) {
+    this.targetFps = targetFps;
+    this.frameTime = 1000 / targetFps; // in milliseconds
+    this.lastTime = Date.now();
+  }
+
+  getFrameTime() {
+    const now = Date.now();
+    const dt = (now - this.lastTime) / 1000; // convert to seconds
+    this.lastTime = now;
+    
+    // Clamp dt to reasonable values
+    return Math.min(dt, this.frameTime * 2 / 1000);
+  }
+
+  getTargetFrameTime() {
+    return this.frameTime / 1000; // return in seconds
+  }
+}
 
 // ==========================
 // UTILITY FUNCTIONS
@@ -47,6 +141,13 @@ const GLOBAL_SETTINGS = {
  */
 function rgbToCSS(rgb) {
   return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+}
+
+/**
+ * Convert RGB array to Hex color string
+ */
+function rgbToHex(rgb) {
+  return `#${((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1)}`;
 }
 
 /**

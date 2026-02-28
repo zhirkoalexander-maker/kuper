@@ -84,6 +84,79 @@ WINDOW_WIDTH = ScreenConfig.WIDTH
 WINDOW_HEIGHT = ScreenConfig.HEIGHT
 GLOBAL_SETTINGS = ApplicationSettings()
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UTILITY CLASSES & HELPERS
+# ═══════════════════════════════════════════════════════════════════════════
+
+class PerformanceMonitor:
+    """Real-time performance monitoring with history tracking"""
+    
+    def __init__(self, history_size: int = 300):
+        self.history = deque(maxlen=history_size)
+        self.peak_fps = 0.0
+        self.lowest_fps = float('inf')
+    
+    def record(self, fps: float):
+        """Record an FPS measurement"""
+        self.history.append(fps)
+        self.peak_fps = max(self.peak_fps, fps)
+        self.lowest_fps = min(self.lowest_fps, fps)
+    
+    def get_average(self) -> float:
+        """Get average FPS"""
+        return sum(self.history) / len(self.history) if self.history else 0.0
+    
+    def get_stability(self) -> float:
+        """Get stability score (0-100), higher = more stable"""
+        if len(self.history) < 2:
+            return 100.0
+        
+        avg = self.get_average()
+        if avg == 0:
+            return 0.0
+        
+        # Calculate variance
+        variance = sum((x - avg) ** 2 for x in self.history) / len(self.history)
+        # Convert to stability (0-100)
+        stability = max(0, 100 - (math.sqrt(variance) / avg * 50))
+        return min(100.0, stability)
+    
+    def reset(self):
+        """Reset monitoring data"""
+        self.history.clear()
+        self.peak_fps = 0.0
+        self.lowest_fps = float('inf')
+
+
+class FrameRateLimiter:
+    """Smooth frame rate limiting with adaptive timing"""
+    
+    def __init__(self, target_fps: int):
+        self.target_fps = target_fps
+        self.frame_time = 1.0 / target_fps
+        self.last_time = time.time()
+        self.accumulated_time = 0.0
+    
+    def wait(self) -> float:
+        """Wait for next frame and return delta time"""
+        current_time = time.time()
+        dt = current_time - self.last_time
+        self.last_time = current_time
+        
+        # Clamp dt to reasonable values
+        dt = min(dt, self.frame_time * 2)
+        
+        self.accumulated_time += dt
+        
+        if self.accumulated_time < self.frame_time:
+            sleep_time = self.frame_time - self.accumulated_time
+            time.sleep(sleep_time * 0.95)  # Sleep slightly less to be safe
+            self.accumulated_time = 0.0
+        
+        return dt
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # BASE GAME MODE FRAMEWORK
 # ═══════════════════════════════════════════════════════════════════════════
