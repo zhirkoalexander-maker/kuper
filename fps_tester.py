@@ -2129,18 +2129,23 @@ def detect_bottleneck(avg_fps, cpu_usage, ram_usage):
     bottleneck = None
     severity = "None"
     
-    if cpu_usage > 80 and avg_fps < 120:
+    # High CPU usage with low FPS = CPU bottleneck
+    if cpu_usage > 85:
         bottleneck = "CPU-Bound"
-        severity = "High" if cpu_usage > 95 else "Medium"
+        severity = "Critical" if cpu_usage > 95 else "High" if cpu_usage > 90 else "Medium"
+    # High RAM usage = RAM bottleneck
     elif ram_usage > 85:
         bottleneck = "RAM-Bound"
-        severity = "High" if ram_usage > 95 else "Medium"
-    elif avg_fps > 90 and cpu_usage < 50 and ram_usage < 60:
+        severity = "Critical" if ram_usage > 95 else "High" if ram_usage > 90 else "Medium"
+    # Low FPS despite low CPU/RAM = GPU bottleneck (expected in graphics tests)
+    elif avg_fps < 60 and cpu_usage < 75 and ram_usage < 80:
         bottleneck = "GPU-Bound"
-        severity = "Medium"
-    elif avg_fps < 45:
+        severity = "High" if avg_fps < 30 else "Medium"
+    # Very low FPS overall = Overall system weak
+    elif avg_fps < 30:
         bottleneck = "Overall-Weak"
         severity = "Critical"
+    # Good balance = well-balanced system
     else:
         bottleneck = "Balanced"
         severity = "Good"
@@ -2149,70 +2154,98 @@ def detect_bottleneck(avg_fps, cpu_usage, ram_usage):
 
 
 def get_game_recommendations(avg_fps, cpu_usage, ram_usage):
-    """Recommend what games can be played at what settings"""
+    """Recommend what games can be played based on stress test results"""
     recommendations = []
     
-    recommendations.append("🎮 Game Playability Matrix:")
+    recommendations.append("🎮 Game Recommendations Based on Test Results:")
+    recommendations.append("")
+    recommendations.append("Note: These are estimated based on stress test performance")
     recommendations.append("")
     
-    if avg_fps >= 120:
-        recommendations.append("✓ ULTRA Settings: All modern games 4K/Ultra")
-        recommendations.append("✓ COMPETITIVE: 240+ FPS in esports titles")
-        recommendations.append("✓ Future-proof: Ready for 2026+ AAA releases")
-    elif avg_fps >= 90:
-        recommendations.append("✓ HIGH Settings: Latest AAA games at 1440p/High")
-        recommendations.append("✓ SMOOTH: 90+ FPS in competitive games")
-        recommendations.append("✓ VR-Ready: Can run VR games comfortably")
-    elif avg_fps >= 60:
-        recommendations.append("✓ MEDIUM Settings: Popular games at 1080p/Medium")
-        recommendations.append("✓ PLAYABLE: 60 FPS in most games")
-        recommendations.append("• Can't run AAA ultra on 4K")
+    # Higher FPS in stress tests = better hardware = can handle harder games
+    if avg_fps >= 180:
+        recommendations.append("✓ EXTREME PERFORMANCE: Top-tier gaming machine")
+        recommendations.append("✓ Can handle: 4K Ultra AAA games at 60+ FPS")
+        recommendations.append("✓ Can handle: 1440p Ultra with raytracing")
+        recommendations.append("✓ Can handle: Competitive gaming at 144+ FPS")
+        recommendations.append("✓ VR: All VR titles at maximum settings")
+    elif avg_fps >= 140:
+        recommendations.append("✓ EXCELLENT: High-end gaming system")
+        recommendations.append("✓ Can handle: 1440p Ultra AAA games at 60+ FPS")
+        recommendations.append("✓ Can handle: 1080p Ultra with raytracing at 100+ FPS")
+        recommendations.append("✓ Can handle: Competitive gaming smoothly")
+        recommendations.append("✓ VR: All VR games at high settings")
+    elif avg_fps >= 100:
+        recommendations.append("✓ VERY GOOD: Strong gaming PC")
+        recommendations.append("✓ Can handle: 1080p High/Ultra AAA games at 60+ FPS")
+        recommendations.append("✓ Can handle: Most modern games at good settings")
+        recommendations.append("✓ Can handle: Competitive games at 90+ FPS")
+        recommendations.append("✓ VR: Most VR titles playable")
+    elif avg_fps >= 70:
+        recommendations.append("✓ GOOD: Solid mid-range gaming PC")
+        recommendations.append("✓ Can handle: 1080p Medium/High AAA games")
+        recommendations.append("✓ Can handle: Popular games at comfortable FPS")
+        recommendations.append("• Some AAA ultra/4K may need settings reduction")
+        recommendations.append("• VR: Most titles playable on medium settings")
     elif avg_fps >= 45:
-        recommendations.append("⚠ LOW Settings: Older games, new games at minimum")
-        recommendations.append("⚠ PLAYABLE: 45-60 FPS in casual/indie games")
-        recommendations.append("! AAA games need lower settings/resolution")
+        recommendations.append("⚠ ACCEPTABLE: Entry-level gaming")
+        recommendations.append("⚠ Can handle: 1080p Low/Medium settings AAA")
+        recommendations.append("⚠ Can handle: Older/lighter games on high settings")
+        recommendations.append("! Demanding AAA games need lower settings")
+        recommendations.append("! VR: Limited support, lower quality games only")
     elif avg_fps >= 30:
-        recommendations.append("⚠ MINIMUM Settings: Indie games, older titles")
-        recommendations.append("! 30-45 FPS - acceptable for single-player")
-        recommendations.append("! Not suitable for competitive gaming")
+        recommendations.append("⚠ MINIMAL: Weak gaming performance")
+        recommendations.append("⚠ Can handle: Indie games, older AAA titles")
+        recommendations.append("⚠ Can handle: Web games, 2D games smoothly")
+        recommendations.append("! Modern AAA games not recommended")
+        recommendations.append("! VR: Not suitable")
     else:
-        recommendations.append("✗ UNPLAYABLE: Modern games won't run smoothly")
-        recommendations.append("! Restricted to retro games, web games")
-        recommendations.append("! Hardware upgrade strongly recommended")
+        recommendations.append("✗ NOT GAMING-READY: Hardware too weak")
+        recommendations.append("✗ Can only run: Older games, casual/web games")
+        recommendations.append("✗ Not recommended for: Gaming at all")
+        recommendations.append("! Hardware upgrade strongly needed for gaming")
     
     return recommendations
 
 
 def get_upgrade_recommendations(avg_fps, cpu_usage, ram_usage, bottleneck):
-    """Suggest specific hardware upgrades"""
+    """Suggest specific hardware upgrades based on bottleneck analysis"""
     recommendations = []
     
     recommendations.append("")
-    recommendations.append("⚡ Upgrade Path (if needed):")
+    recommendations.append("⚡ Upgrade Recommendations:")
     
     if bottleneck == "CPU-Bound":
-        recommendations.append("1. PRIORITY: Upgrade CPU (most impactful)")
-        recommendations.append("   - Will improve FPS by 30-60%")
-        recommendations.append("   - Look for newer generation with same socket")
+        recommendations.append("🔴 PRIMARY BOTTLENECK: CPU is limiting performance")
+        recommendations.append("   Action: Upgrade to newer/faster CPU")
+        recommendations.append("   Expected gain: +30-50% FPS improvement")
+        recommendations.append("   Cost priority: HIGH")
     elif bottleneck == "RAM-Bound":
-        recommendations.append("1. PRIORITY: Add/upgrade RAM")
+        recommendations.append("🔴 PRIMARY BOTTLENECK: RAM insufficient or too slow")
         if ram_usage > 95:
-            recommendations.append("   - Upgrade from current to 32GB+")
+            recommendations.append("   Action: Increase RAM to 32GB+ or upgrade speed")
+            recommendations.append("   Current: System at critical memory limit")
         else:
-            recommendations.append("   - Upgrade from current to 24GB+")
-        recommendations.append("   - Will stabilize performance")
+            recommendations.append("   Action: Increase RAM to 24GB+ or upgrade speed")
+            recommendations.append("   Current: Memory bandwidth insufficient")
+        recommendations.append("   Expected gain: +20-40% FPS improvement")
+        recommendations.append("   Cost priority: MEDIUM")
     elif bottleneck == "GPU-Bound":
-        recommendations.append("1. PRIORITY: Upgrade GPU (if dedicated graphics)")
-        recommendations.append("   - Will improve FPS significantly")
-        recommendations.append("   - Integrated GPU users: limited upgrade path")
+        recommendations.append("🔴 PRIMARY BOTTLENECK: GPU is the limiting factor")
+        recommendations.append("   Action: Upgrade to newer/stronger GPU")
+        recommendations.append("   Expected gain: +40-100% FPS improvement")
+        recommendations.append("   Cost priority: HIGH (most expensive)")
     elif bottleneck == "Overall-Weak":
-        recommendations.append("1. PRIORITY: Full system upgrade")
-        recommendations.append("   - Consider: New CPU + GPU + RAM combo")
-        recommendations.append("   - Or budget laptop/gaming rig replacement")
+        recommendations.append("🔴 CRITICAL: Entire system is underpowered")
+        recommendations.append("   Action: Major upgrade or full system replacement")
+        recommendations.append("   Priority: CPU + GPU upgrade combo")
+        recommendations.append("   Or: Replace entire system")
     else:
-        recommendations.append("✓ No critical upgrades needed")
-        recommendations.append("• System is well-balanced")
-        recommendations.append("• Consider GPU for gaming, CPU for productivity")
+        recommendations.append("✅ NO UPGRADES NEEDED")
+        recommendations.append("   Your system is well-balanced!")
+        recommendations.append("   Optional improvements:")
+        recommendations.append("   • SSD upgrade for faster loading")
+        recommendations.append("   • Additional storage (if needed)")
     
     return recommendations
 
