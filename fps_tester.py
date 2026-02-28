@@ -84,6 +84,20 @@ WINDOW_WIDTH = ScreenConfig.WIDTH
 WINDOW_HEIGHT = ScreenConfig.HEIGHT
 GLOBAL_SETTINGS = ApplicationSettings()
 
+# Quick color references for convenience
+BLACK = ColorScheme.BLACK
+WHITE = ColorScheme.WHITE
+GREEN = ColorScheme.GREEN
+RED = ColorScheme.RED
+YELLOW = ColorScheme.YELLOW
+BLUE = ColorScheme.BLUE
+CYAN = ColorScheme.CYAN
+MAGENTA = ColorScheme.MAGENTA
+ORANGE = ColorScheme.ORANGE
+PURPLE = ColorScheme.PURPLE
+DARK_GRAY = ColorScheme.DARK_GRAY
+LIGHT_GRAY = ColorScheme.LIGHT_GRAY
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # UTILITY CLASSES & HELPERS
