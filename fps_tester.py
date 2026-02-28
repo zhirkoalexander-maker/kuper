@@ -2724,6 +2724,7 @@ while True:
     category = show_main_menu()
     
     if category is None:
+        # Exit requested from main menu
         break
     
     # Select test category
@@ -2733,11 +2734,12 @@ while True:
         selected = show_system_menu()
     
     if selected is None:
+        # Back to main menu if no test selected
         continue
     
-    result = run_game_mode(selected)
-    if result is False:
-        break
+    # Run the selected game mode
+    run_game_mode(selected)
+    # Return to main menu after test completes (whether exited or finished)
 
 pygame.quit()
 sys.exit()
