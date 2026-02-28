@@ -1,3 +1,13 @@
+"""
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         FPS TESTER v2.0                                   ║
+║                 Performance Analysis & Stress Testing Tool                 ║
+║                                                                            ║
+║  A professional desktop application for testing GPU/CPU performance       ║
+║  with real-time metrics, system monitoring, and crash protection.         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+"""
+
 import pygame
 import sys
 import time
@@ -5,153 +15,315 @@ import random
 import math
 import os
 from collections import deque
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Tuple, List, Dict, Optional
 
-# Attempt to import psutil (optional)
 try:
     import psutil
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
-    print("Warning: psutil not installed. Some features will be limited.")
 
-# ==========================
-# WEBSITE ARCHITECTURE
-# ==========================
-# PLANNED: Dual-screen architecture for web version:
-# - Screen 1: Testing canvas (game modes)
-# - Screen 2: Statistics panel (FPS, recommendations, CPU/RAM graphs)
-# - If Screen 1 crashes, Screen 2 remains stable with "Restart" button
-# - Frames will be independent with WebSocket communication
-# ==========================
-
-# Initialize pygame
 pygame.init()
 
-# Window parameters
-WINDOW_WIDTH = 1400
-WINDOW_HEIGHT = 900
 
-# Colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-YELLOW = (255, 255, 0)
-BLUE = (0, 100, 255)
-CYAN = (0, 255, 255)
-MAGENTA = (255, 0, 255)
-ORANGE = (255, 165, 0)
-PURPLE = (128, 0, 128)
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
 
-# ==========================
-# GLOBAL SETTINGS
-# ==========================
+class ScreenConfig:
+    """Display and window configuration"""
+    WIDTH = 1400
+    HEIGHT = 900
+    FPS_CAP = 300
+    TARGET_FPS = 60
 
-GLOBAL_SETTINGS = {
-    "show_fps_rounded": True,
-    "show_fps_real": True,
-    "show_hints": True,
-    "show_mode_stats": True,
-    "show_results": True
-}
 
-# ==========================
-# GAME MODES
-# ==========================
+class ColorScheme:
+    """Color palette for the application"""
+    BLACK = (0, 0, 0)
+    WHITE = (255, 255, 255)
+    GREEN = (0, 255, 0)
+    RED = (255, 0, 0)
+    YELLOW = (255, 255, 0)
+    BLUE = (0, 100, 255)
+    CYAN = (0, 255, 255)
+    MAGENTA = (255, 0, 255)
+    ORANGE = (255, 165, 0)
+    PURPLE = (128, 0, 128)
+    DARK_GRAY = (30, 30, 30)
+    LIGHT_GRAY = (200, 200, 200)
 
-class GameMode:
-    def __init__(self, name, difficulty):
+
+class ApplicationSettings:
+    """Global application settings"""
+    defaults = {
+        "show_fps_rounded": True,
+        "show_fps_real": True,
+        "show_hints": True,
+        "show_mode_stats": True,
+        "show_results": True,
+        "crash_protection": True,
+    }
+    
+    def __init__(self):
+        self.settings = self.defaults.copy()
+    
+    def get(self, key: str, default=None):
+        return self.settings.get(key, default)
+    
+    def set(self, key: str, value):
+        self.settings[key] = value
+    
+    def toggle(self, key: str):
+        self.settings[key] = not self.settings.get(key, False)
+
+
+WINDOW_WIDTH = ScreenConfig.WIDTH
+WINDOW_HEIGHT = ScreenConfig.HEIGHT
+GLOBAL_SETTINGS = ApplicationSettings()
+
+# ═══════════════════════════════════════════════════════════════════════════
+# BASE GAME MODE FRAMEWORK
+# ═══════════════════════════════════════════════════════════════════════════
+
+class GameMode(ABC):
+    """
+    Abstract base class for all game modes.
+    Defines the interface for stress testing applications.
+    """
+    
+    def __init__(self, name: str, difficulty: int):
         self.name = name
-        self.difficulty = difficulty  # 1-5
-        self.fps_values = deque(maxlen=300)
-        self.fps_display_timer = 0
+        self.difficulty = min(5, max(1, difficulty))  # Clamp 1-5
+        self.fps_values: deque = deque(maxlen=300)
+        self.fps_display_timer = 0.0
         self.current_fps_display = 0
+        self.start_time = time.time()
+        self.frame_count = 0
     
-    def update(self, dt, keys):
+    @abstractmethod
+    def update(self, dt: float, keys: pygame.key.ScalarKeyType):
+        """Update game state"""
         pass
     
-    def draw(self, screen):
+    @abstractmethod
+    def draw(self, screen: pygame.Surface):
+        """Render to screen"""
         pass
     
-    def get_fps_display(self, raw_fps, dt):
+    def on_start(self):
+        """Called when mode starts"""
+        self.start_time = time.time()
+        self.frame_count = 0
+    
+    def on_exit(self):
+        """Called when mode exits"""
+        pass
+    
+    def get_fps_display(self, raw_fps: float, dt: float) -> int:
+        """Get rounded FPS for display"""
         self.fps_values.append(raw_fps)
         self.fps_display_timer += dt
         
         if self.fps_display_timer >= 0.5:
-            # Heavily round to 10
             self.current_fps_display = round(raw_fps / 10) * 10
             self.fps_display_timer = 0
         
+        self.frame_count += 1
         return self.current_fps_display
     
-    def get_stats(self):
-        if self.fps_values:
-            avg = sum(self.fps_values) / len(self.fps_values)
-            min_fps = min(self.fps_values)
-            max_fps = max(self.fps_values)
-            return avg, min_fps, max_fps
-        return 0, 0, 0
+    def get_statistics(self) -> Tuple[float, float, float]:
+        """Returns (average_fps, min_fps, max_fps)"""
+        if not self.fps_values:
+            return 0.0, 0.0, 0.0
+        
+        avg = sum(self.fps_values) / len(self.fps_values)
+        return avg, min(self.fps_values), max(self.fps_values)
+    
+    def get_elapsed_time(self) -> float:
+        """Get elapsed time since mode start"""
+        return time.time() - self.start_time
+    
+    def get_difficulty_label(self) -> str:
+        """Get human-readable difficulty label"""
+        labels = {1: "EASY", 2: "MEDIUM", 3: "HARD", 4: "EXTREME", 5: "MAXIMUM"}
+        return labels.get(self.difficulty, "UNKNOWN")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# GAME MODES - GPU STRESS TESTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class Particle:
+    """Represents a single particle in the simulation"""
+    
+    __slots__ = ['x', 'y', 'vx', 'vy', 'color', 'size', 'life', 'max_life']
+    
+    def __init__(self, x: float, y: float, vx: float, vy: float,
+                 color: Tuple[int, int, int], size: int, life: float):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.color = color
+        self.size = size
+        self.life = life
+        self.max_life = life
+    
+    def update(self, dt: float, gravity: float = 0.0, friction: float = 1.0):
+        """Update particle physics"""
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.vy += gravity * dt
+        self.vx *= friction
+        self.vy *= friction
+        self.life -= dt
+    
+    def is_alive(self) -> bool:
+        """Check if particle is still alive"""
+        return self.life > 0
+    
+    def get_alpha(self) -> float:
+        """Get fade-out alpha (0.0 to 1.0)"""
+        return max(0.0, self.life / self.max_life)
+
+
+class ParticleSystem:
+    """Manages a collection of particles with efficient batch operations"""
+    
+    def __init__(self, max_particles: int = 10000):
+        self.particles: List[Particle] = []
+        self.max_particles = max_particles
+    
+    def emit(self, particle: Particle):
+        """Add a new particle"""
+        if len(self.particles) < self.max_particles:
+            self.particles.append(particle)
+    
+    def emit_burst(self, x: float, y: float, count: int,
+                   speed_range: Tuple[float, float],
+                   color: Tuple[int, int, int], size: int, life: float):
+        """Emit multiple particles at once"""
+        for _ in range(count):
+            if len(self.particles) >= self.max_particles:
+                break
+            
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(*speed_range)
+            
+            particle = Particle(
+                x, y,
+                math.cos(angle) * speed,
+                math.sin(angle) * speed,
+                color, size, life
+            )
+            self.particles.append(particle)
+    
+    def update(self, dt: float, bounds: Optional[Tuple[int, int, int, int]] = None,
+               gravity: float = 0.0):
+        """Update all particles"""
+        alive_particles = []
+        
+        for particle in self.particles:
+            particle.update(dt, gravity)
+            
+            if particle.is_alive():
+                # Boundary checking
+                if bounds:
+                    x_min, y_min, x_max, y_max = bounds
+                    if particle.x < x_min or particle.x > x_max:
+                        particle.vx *= -0.9
+                        particle.x = max(x_min, min(x_max, particle.x))
+                    if particle.y < y_min or particle.y > y_max:
+                        particle.vy *= -0.9
+                        particle.y = max(y_min, min(y_max, particle.y))
+                
+                alive_particles.append(particle)
+        
+        self.particles = alive_particles
+    
+    def draw(self, screen: pygame.Surface):
+        """Draw all particles"""
+        for particle in self.particles:
+            if particle.size > 0:
+                pygame.draw.circle(screen, particle.color,
+                                   (int(particle.x), int(particle.y)),
+                                   particle.size)
+    
+    def clear(self):
+        """Remove all particles"""
+        self.particles.clear()
+    
+    def get_count(self) -> int:
+        """Get current particle count"""
+        return len(self.particles)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 
 class ParticleStorm(GameMode):
-    """Particle Storm - screen fills with particles, click for explosion"""
+    """
+    Particle Storm - Screen fills with thousands of particles.
+    Tests GPU fill rate and particle rendering performance.
+    Click to trigger particle explosions.
+    """
+    
     def __init__(self):
         super().__init__("Particle Storm", 4)
-        self.particles = []
-        self.particles_per_frame = 50 + self.difficulty * 30
-        self.explosions = []
+        self.particle_system = ParticleSystem(max_particles=50000)
+        self.emission_rate = 50 + self.difficulty * 30
+        self.color_palette = [
+            ColorScheme.RED, ColorScheme.BLUE, ColorScheme.GREEN,
+            ColorScheme.YELLOW, ColorScheme.CYAN, ColorScheme.MAGENTA
+        ]
     
-    def update(self, dt, keys):
-        # Mouse click
+    def update(self, dt: float, keys: pygame.key.ScalarKeyType):
+        """Handle particle updates and user input"""
+        # Handle explosion on mouse click
         if pygame.mouse.get_pressed()[0]:
             mx, my = pygame.mouse.get_pos()
-            for _ in range(80):
-                angle = random.uniform(0, 2 * math.pi)
-                speed = random.uniform(2, 6)
-                self.particles.append({
-                    'x': mx,
-                    'y': my,
-                    'vx': math.cos(angle) * speed,
-                    'vy': math.sin(angle) * speed,
-                    'color': random.choice([RED, BLUE, GREEN, YELLOW, CYAN, MAGENTA]),
-                    'size': random.randint(2, 5),
-                    'life': 2.0
-                })
+            self.particle_system.emit_burst(
+                x=mx, y=my, count=80,
+                speed_range=(2.0, 6.0),
+                color=random.choice(self.color_palette),
+                size=random.randint(2, 5),
+                life=2.0
+            )
         
-        # Create particles automatically
-        for _ in range(self.particles_per_frame):
-            self.particles.append({
-                'x': random.randint(0, WINDOW_WIDTH),
-                'y': random.randint(0, WINDOW_HEIGHT),
-                'vx': random.uniform(-3, 3),
-                'vy': random.uniform(-3, 3),
-                'color': random.choice([RED, BLUE, GREEN, YELLOW, CYAN, MAGENTA]),
-                'size': random.randint(1, 4),
-                'life': 5.0
-            })
+        # Continuous particle emission
+        for _ in range(self.emission_rate):
+            x = random.randint(0, WINDOW_WIDTH)
+            y = random.randint(0, WINDOW_HEIGHT)
+            
+            particle = Particle(
+                x, y,
+                random.uniform(-3, 3),
+                random.uniform(-3, 3),
+                random.choice(self.color_palette),
+                random.randint(1, 4),
+                5.0
+            )
+            self.particle_system.emit(particle)
         
-        # Update particles
-        for p in self.particles[:]:
-            p['x'] += p['vx']
-            p['y'] += p['vy']
-            p['life'] -= dt
-            
-            # Bounce off walls
-            if p['x'] < 0 or p['x'] > WINDOW_WIDTH:
-                p['vx'] *= -1
-            if p['y'] < 0 or p['y'] > WINDOW_HEIGHT:
-                p['vy'] *= -1
-            
-            # Remove if too many or dead
-            if len(self.particles) > 5000 or p['life'] <= 0:
-                self.particles.remove(p)
+        # Update all particles with boundary wrapping
+        bounds = (0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.particle_system.update(dt, bounds=bounds)
     
-    def draw(self, screen):
-        for p in self.particles:
-            pygame.draw.circle(screen, p['color'], (int(p['x']), int(p['y'])), p['size'])
+    def draw(self, screen: pygame.Surface):
+        """Render all particles"""
+        screen.fill(ColorScheme.BLACK)
+        self.particle_system.draw(screen)
         
+        # Debug info
         font = pygame.font.Font(None, 36)
-        count = font.render(f"Particles: {len(self.particles)} | Click for explosion", True, WHITE)
-        screen.blit(count, (50, 30))
+        info = font.render(
+            f"Particles: {self.particle_system.get_count()} | Click for explosion",
+            True, ColorScheme.WHITE
+        )
+        screen.blit(info, (50, 30))
 
 class PolygonRush(GameMode):
     """Polygon Rush - rotating polygons, move towards cursor"""
@@ -1176,14 +1348,18 @@ class ParticleAttractor(GameMode):
         text = font.render(f"Move cursor to attract particles | Count: {len(self.particles)}", True, WHITE)
         screen.blit(text, (50, 30))
 
-# ==========================
-# MENUS AND RESULTS
-# ==========================
-# MAIN MENU
-# ==========================
+# ═══════════════════════════════════════════════════════════════════════════
+# UI LAYER - MENUS AND INTERFACES
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# ─── Main Menu ───────────────────────────────────────────────────────────
 
 def show_main_menu():
-    """Main menu - choose between FPS, System tests and Settings"""
+    """
+    Main menu - choose between FPS, System tests and Settings.
+    Provides visual category selection with animated background.
+    """
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("FPS Tester - Main Menu")
     clock = pygame.time.Clock()
@@ -1311,8 +1487,14 @@ def show_main_menu():
         pygame.display.flip()
         clock.tick(60)
 
+
+# ─── FPS Tests Menu ──────────────────────────────────────────────────────
+
 def show_fps_menu():
-    """Menu to select FPS mode"""
+    """
+    Menu to select FPS mode.
+    Displays all available GPU/CPU stress tests with descriptions.
+    """
     modes = [
         ("1", "Particle Storm", "Particles and explosions"),
         ("2", "Polygon Rush", "Rotating polygons"),
@@ -1378,8 +1560,14 @@ def show_fps_menu():
         pygame.display.flip()
         clock.tick(60)
 
+
+# ─── System Tests Menu ───────────────────────────────────────────────────
+
 def show_system_menu():
-    """Menu to select System tests"""
+    """
+    Menu to select System tests.
+    CPU, RAM, and Disk benchmarking options.
+    """
     modes = [
         ("A", "CPU Test", "Processor test"),
         ("S", "RAM Test", "Memory test"),
@@ -2108,8 +2296,15 @@ def show_results(game_mode):
         clock.tick(60)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# GAME ENGINE & MAIN LOOP
+# ═══════════════════════════════════════════════════════════════════════════
+
 def run_game_mode(mode_key):
-    """Run selected mode"""
+    """
+    Run selected game mode.
+    Handles game loop, FPS counting, and crash protection.
+    """
     # Create mode
     modes_map = {
         "1": ParticleStorm,
@@ -2393,23 +2588,25 @@ def run_game_mode(mode_key):
         
         return False
 
-# ==========================
-# MAIN LOOP
-# ==========================
+
+# ═══════════════════════════════════════════════════════════════════════════
+# APPLICATION ENTRY POINT
+# ═══════════════════════════════════════════════════════════════════════════
 
 # Show welcome screen
 if not show_welcome_screen():
     pygame.quit()
     sys.exit()
 
+# Main application loop
 while True:
-    # Main menu
+    # Show main menu
     category = show_main_menu()
     
     if category is None:
         break
     
-    # Select mode based on category
+    # Select test category
     if category == "fps":
         selected = show_fps_menu()
     else:  # system
