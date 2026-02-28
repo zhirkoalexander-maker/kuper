@@ -177,7 +177,7 @@ class GameMode(ABC):
         self.frame_count = 0
     
     @abstractmethod
-    def update(self, dt: float, keys: pygame.key.ScalarKeyType):
+    def update(self, dt: float, keys: Optional[tuple]):
         """Update game state"""
         pass
     
@@ -353,7 +353,7 @@ class ParticleStorm(GameMode):
             ColorScheme.YELLOW, ColorScheme.CYAN, ColorScheme.MAGENTA
         ]
     
-    def update(self, dt: float, keys: pygame.key.ScalarKeyType):
+    def update(self, dt: float, keys: Optional[tuple]):
         """Handle particle updates and user input"""
         # Handle explosion on mouse click
         if pygame.mouse.get_pressed()[0]:
