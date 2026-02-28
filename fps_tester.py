@@ -1656,10 +1656,10 @@ def show_system_menu():
     CPU, RAM, and Disk benchmarking options.
     """
     modes = [
-        ("A", "CPU Test", "Processor test"),
-        ("S", "RAM Test", "Memory test"),
+        ("C", "CPU Test", "Processor test"),
+        ("M", "RAM Test", "Memory test"),
         ("D", "Disk I/O Test", "Disk test"),
-        ("F", "System Monitor", "System monitor"),
+        ("S", "System Monitor", "System monitor"),
     ]
     
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -2440,10 +2440,10 @@ def run_game_mode(mode_key):
         "Q": InteractiveDraw,
         "W": NoiseField,
         "E": ParticleAttractor,
-        "A": CPUTest,
-        "S": RAMTest,
+        "C": CPUTest,
+        "M": RAMTest,
         "D": DiskIOTest,
-        "F": SystemMonitor,
+        "S": SystemMonitor,
     }
     
     game_mode = modes_map[mode_key]()
