@@ -3,356 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPS Tester - Web Version</title>
+    <title>FPS Tester - Know Your Hardware</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fff;
+            color: #222;
+            line-height: 1.6;
         }
-
-        .container {
-            width: 100%;
-            max-width: 1500px;
-        }
-
-        .header {
+        header {
+            padding: 60px 20px;
             text-align: center;
-            margin-bottom: 30px;
-            color: white;
+            border-bottom: 1px solid #eee;
         }
-
-        .header h1 {
-            font-size: 3em;
-            color: #00ffff;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.2em;
-            color: #ffff00;
-        }
-
-        .layout-dual {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .layout-single {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .canvas-container {
-            background: #0f0f0f;
-            border: 3px solid #00ffff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-        }
-
-        .stats-panel {
-            background: #1a1a2e;
-            border: 3px solid #00ff00;
-            border-radius: 10px;
-            padding: 20px;
-            color: white;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
-            overflow-y: auto;
-            max-height: 900px;
-        }
-
-        .stats-panel h2 {
-            color: #00ff00;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-        }
-
-        .stat-item {
-            background: rgba(0, 255, 0, 0.1);
-            padding: 10px;
-            margin: 10px 0;
-            border-left: 3px solid #00ff00;
-            border-radius: 5px;
-        }
-
-        .stat-label {
-            color: #888;
-            font-size: 0.9em;
-        }
-
-        .stat-value {
-            color: #00ff00;
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .controls {
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #00ffff, #00ff00);
-            color: #000;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1.1em;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 10px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-        }
-
-        .btn:active {
-            transform: scale(0.95);
-        }
-
-        .info-box {
-            background: rgba(255, 255, 0, 0.1);
-            border: 2px solid #ffff00;
-            padding: 15px;
-            border-radius: 5px;
-            color: #ffff00;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        @media (max-width: 1200px) {
-            .layout-dual {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
-        }
-
+        header h1 { font-size: 2.2em; font-weight: 600; margin-bottom: 8px; }
+        header p { font-size: 1em; color: #666; }
+        .container { max-width: 850px; margin: 0 auto; padding: 50px 20px; }
+        section { margin-bottom: 60px; }
+        h2 { font-size: 1.7em; font-weight: 600; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #000; }
+        h3 { font-size: 1.1em; font-weight: 600; margin: 25px 0 12px 0; }
+        p { color: #555; margin-bottom: 12px; }
+        ul { list-style: none; }
+        li { padding: 8px 0 8px 20px; position: relative; color: #555; }
+        li:before { content: "→"; position: absolute; left: 0; }
+        .code { background: #222; color: #0f0; padding: 12px; border-radius: 3px; overflow-x: auto; margin: 12px 0; font-family: 'Monaco', monospace; font-size: 0.9em; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+        .box { padding: 12px; border: 1px solid #ddd; border-radius: 3px; }
+        .box h4 { font-weight: 600; margin-bottom: 4px; font-size: 0.95em; }
+        .box p { font-size: 0.85em; color: #888; }
+        .games { background: #f9f9f9; padding: 25px; border-radius: 3px; margin: 15px 0; }
+        .game-tier { margin-bottom: 20px; }
+        .game-tier h4 { font-weight: 600; margin-bottom: 8px; }
+        .game-tier ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+        .game-tier li { background: white; padding: 6px 10px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.9em; }
+        .btn { display: inline-block; background: #000; color: white; padding: 10px 25px; border-radius: 3px; text-decoration: none; margin: 8px 8px 8px 0; transition: background 0.2s; }
+        .btn:hover { background: #333; }
+        .btn-light { background: #f0f0f0; color: #000; border: 1px solid #ddd; }
+        .btn-light:hover { background: #e0e0e0; }
+        footer { background: #f5f5f5; padding: 30px 20px; text-align: center; border-top: 1px solid #eee; color: #999; margin-top: 60px; font-size: 0.9em; }
+        .bg { background: #f5f5f5; padding: 20px; border-radius: 3px; margin: 15px 0; }
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .header h1 {
-                font-size: 1.5em;
-            }
-
-            .header p {
-                font-size: 1em;
-            }
-        }
-
-        .status-excellent {
-            color: #00ff00;
-        }
-
-        .status-good {
-            color: #ffff00;
-        }
-
-        .status-poor {
-            color: #ff6600;
-        }
-
-        .status-critical {
-            color: #ff0000;
+            header h1 { font-size: 1.6em; }
+            h2 { font-size: 1.3em; }
+            .grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+    <header>
+        <h1>FPS Tester</h1>
+        <p>See what your computer can actually do</p>
+    </header>
+    
     <div class="container">
-        <div class="header">
-            <h1>FPS TESTER</h1>
-            <p>Performance Analysis Tool for Web Browsers</p>
-        </div>
-
-        <!-- Dual Screen Layout (for website version) -->
-        <div class="layout-dual" id="layoutDual">
-            <!-- Screen 1: Test Canvas -->
-            <div class="canvas-container">
-                <canvas id="testCanvas" width="1400" height="900"></canvas>
+        <section>
+            <h2>What</h2>
+            <p>FPS Tester runs GPU and CPU stress tests. Real numbers. Real results. Tells you which games you can actually play on your hardware.</p>
+        </section>
+        
+        <section>
+            <h2>Install</h2>
+            <div class="bg">
+                <div class="code">git clone https://github.com/zhirkoalexander-maker/kuper.git
+cd kuper && python -m venv .venv
+source .venv/bin/activate
+pip install pygame psutil
+python fps_tester.py</div>
             </div>
-
-            <!-- Screen 2: Statistics Panel -->
-            <div class="stats-panel">
-                <h2>Real-time Statistics</h2>
-                
-                <div class="stat-item">
-                    <div class="stat-label">Current FPS</div>
-                    <div class="stat-value" id="fpsDisplay">--</div>
+            <h3>Usage</h3>
+            <ul>
+                <li>Pick a test (13 GPU + 4 System)</li>
+                <li>Watch FPS in the corner</li>
+                <li>Press ESC when done</li>
+                <li>Get game recommendations</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2>13 GPU Tests</h2>
+            <div class="grid">
+                <div class="box"><h4>Particle Storm</h4><p>Explosions</p></div>
+                <div class="box"><h4>Polygon Rush</h4><p>Rotating shapes</p></div>
+                <div class="box"><h4>Matrix Rain</h4><p>Falling chars</p></div>
+                <div class="box"><h4>Fractal Tree</h4><p>Recursive</p></div>
+                <div class="box"><h4>Gravity Fields</h4><p>Physics</p></div>
+                <div class="box"><h4>Bouncing Balls</h4><p>Collisions</p></div>
+                <div class="box"><h4>Plasma</h4><p>Generation</p></div>
+                <div class="box"><h4>Mandelbrot</h4><p>Fractals</p></div>
+                <div class="box"><h4>Tunnel</h4><p>3D</p></div>
+                <div class="box"><h4>Starfield</h4><p>Space</p></div>
+                <div class="box"><h4>Draw</h4><p>Interactive</p></div>
+                <div class="box"><h4>Noise Field</h4><p>Perlin</p></div>
+                <div class="box"><h4>Particle Attractor</h4><p>Follow cursor</p></div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>4 System Tests</h2>
+            <div class="grid">
+                <div class="box"><h4>CPU</h4><p>Processor</p></div>
+                <div class="box"><h4>RAM</h4><p>Memory</p></div>
+                <div class="box"><h4>Disk I/O</h4><p>Storage</p></div>
+                <div class="box"><h4>Monitor</h4><p>Live stats</p></div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Games You Can Play</h2>
+            <div class="games">
+                <div class="game-tier">
+                    <h4>120+ FPS</h4>
+                    <ul><li>Cyberpunk 2077</li><li>Red Dead 2</li><li>Flight Sim</li></ul>
                 </div>
-
-                <div class="stat-item">
-                    <div class="stat-label">Average FPS</div>
-                    <div class="stat-value" id="avgDisplay">--</div>
+                <div class="game-tier">
+                    <h4>90+ FPS</h4>
+                    <ul><li>Hogwarts Legacy</li><li>Baldur's Gate 3</li><li>Alan Wake 2</li></ul>
                 </div>
-
-                <div class="stat-item">
-                    <div class="stat-label">Min FPS</div>
-                    <div class="stat-value" id="minDisplay">--</div>
+                <div class="game-tier">
+                    <h4>60+ FPS</h4>
+                    <ul><li>Elden Ring</li><li>Starfield</li><li>Witcher 3</li></ul>
                 </div>
-
-                <div class="stat-item">
-                    <div class="stat-label">Max FPS</div>
-                    <div class="stat-value" id="maxDisplay">--</div>
+                <div class="game-tier">
+                    <h4>45+ FPS</h4>
+                    <ul><li>Fortnite</li><li>Minecraft</li><li>Dota 2</li></ul>
                 </div>
-
-                <div class="stat-item">
-                    <div class="stat-label">Stability</div>
-                    <div class="stat-value" id="stabilityDisplay">--</div>
-                </div>
-
-                <h2 style="margin-top: 30px;">Performance Status</h2>
-                <div class="stat-item">
-                    <div class="stat-value" id="statusDisplay">---</div>
-                </div>
-
-                <h2 style="margin-top: 30px;">Recommendations</h2>
-                <div id="recommendationsDisplay" style="color: #888; font-size: 0.9em;">
-                    <p>Run a test to see recommendations</p>
-                </div>
-
-                <div class="info-box">
-                    🌐 <strong>Dual-Screen Architecture:</strong>
-                    <br>If the test canvas crashes, this panel remains stable with a restart button.
+                <div class="game-tier">
+                    <h4>30+ FPS</h4>
+                    <ul><li>Indie games</li><li>2D games</li><li>Older titles</li></ul>
                 </div>
             </div>
-        </div>
-
-        <!-- Single Canvas Layout (fallback) -->
-        <div class="layout-single" id="layoutSingle" style="display: none;">
-            <div class="canvas-container">
-                <canvas id="testCanvasSingle" width="1400" height="900"></canvas>
-            </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls">
-            <button class="btn" onclick="startTest()">Start Test</button>
-            <button class="btn" onclick="resetTest()">Reset</button>
-            <button class="btn" onclick="toggleLayout()">Toggle Layout</button>
-        </div>
-
-        <div class="info-box">
-            📋 <strong>How to Use:</strong>
-            <br>Click "Start Test" to begin. Select a test mode from the menu.
-            <br>For FPS tests, interact with the canvas (click, move mouse).
-            <br>Press ESC to finish and see recommendations.
-        </div>
+        </section>
+        
+        <section>
+            <h2>Controls</h2>
+            <ul>
+                <li><strong>ESC</strong> - Exit</li>
+                <li><strong>S</strong> - Settings</li>
+                <li><strong>Arrow/A,D</strong> - Navigate</li>
+                <li><strong>ENTER/SPACE</strong> - Select</li>
+            </ul>
+        </section>
+        
+        <section style="text-align: center; padding: 30px 0; border-top: 1px solid #eee;">
+            <a href="https://github.com/zhirkoalexander-maker/kuper" class="btn">GitHub</a>
+            <a href="https://github.com/zhirkoalexander-maker/kuper/releases" class="btn btn-light">Download</a>
+        </section>
     </div>
-
-    <!-- Load FPS Tester JavaScript -->
-    <script src="fps_tester.js"></script>
-
-    <script>
-        // Global app instance
-        let fpsTester = null;
-        let dualScreenMode = true;
-
-        function initializeApp() {
-            const canvasId = dualScreenMode ? 'testCanvas' : 'testCanvasSingle';
-            const canvas = document.getElementById(canvasId);
-            
-            if (!canvas) {
-                console.error('Canvas not found:', canvasId);
-                return;
-            }
-
-            fpsTester = new FPSTesterApp(canvasId);
-        }
-
-        function startTest() {
-            if (!fpsTester) {
-                initializeApp();
-            }
-            // Start the app (welcome screen → menu → test)
-            fpsTester.start().catch(err => console.error('Test error:', err));
-        }
-
-        function resetTest() {
-            // Reset statistics display
-            document.getElementById('fpsDisplay').textContent = '--';
-            document.getElementById('avgDisplay').textContent = '--';
-            document.getElementById('minDisplay').textContent = '--';
-            document.getElementById('maxDisplay').textContent = '--';
-            document.getElementById('stabilityDisplay').textContent = '--';
-            document.getElementById('statusDisplay').textContent = '---';
-            document.getElementById('recommendationsDisplay').innerHTML = '<p>Run a test to see recommendations</p>';
-        }
-
-        function toggleLayout() {
-            dualScreenMode = !dualScreenMode;
-            document.getElementById('layoutDual').style.display = dualScreenMode ? 'grid' : 'none';
-            document.getElementById('layoutSingle').style.display = dualScreenMode ? 'none' : 'grid';
-            
-            if (fpsTester) {
-                fpsTester = null;
-            }
-            
-            resetTest();
-        }
-
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            initializeApp();
-        });
-
-        // Update statistics display (called from game loop)
-        function updateStatsDisplay(avg, min, max, currentFps) {
-            document.getElementById('fpsDisplay').textContent = Math.round(currentFps);
-            document.getElementById('avgDisplay').textContent = Math.round(avg);
-            document.getElementById('minDisplay').textContent = Math.round(min);
-            document.getElementById('maxDisplay').textContent = Math.round(max);
-            document.getElementById('stabilityDisplay').textContent = `±${Math.round(max - min)} FPS`;
-        }
-
-        // Update performance status (called when test completes)
-        function updatePerformanceStatus(status, statusColor, recommendations) {
-            const statusEl = document.getElementById('statusDisplay');
-            statusEl.textContent = status;
-            
-            // Add color class based on status
-            statusEl.className = 'stat-value status-' + status.toLowerCase();
-
-            // Update recommendations
-            const recEl = document.getElementById('recommendationsDisplay');
-            if (recommendations && recommendations.length > 0) {
-                recEl.innerHTML = recommendations
-                    .map(rec => `<p>${rec}</p>`)
-                    .join('');
-            }
-        }
-    </script>
+    
+    <footer>
+        <p>FPS Tester — Performance testing tool</p>
+        <p>Python, pygame, psutil</p>
+    </footer>
 </body>
 </html>
