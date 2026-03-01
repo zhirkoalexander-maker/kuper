@@ -4,7 +4,7 @@
 ║                 Performance Analysis & Stress Testing Tool                 ║
 ║                                                                            ║
 ║  A professional desktop application for testing GPU/CPU performance       ║
-║  with real-time metrics and system monitoring.                            ║
+║  with real-time metrics, system monitoring, and crash protection.         ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 """
 
@@ -64,6 +64,7 @@ class ApplicationSettings:
         "show_hints": True,
         "show_mode_stats": True,
         "show_results": True,
+        "crash_protection": True,
     }
     
     def __init__(self):
@@ -1579,22 +1580,22 @@ def show_main_menu():
 def show_fps_menu():
     """
     Menu to select FPS mode.
-    Displays all available GPU/CPU stress tests with difficulty levels.
+    Displays all available GPU/CPU stress tests with descriptions.
     """
     modes = [
-        ("1", "Particle Storm", "Varies particle count by difficulty (EASY→HARD)"),
-        ("2", "Polygon Rush", "Polygon load adjusts with difficulty level"),
-        ("3", "Matrix Rain", "Character count scales 1-5 with difficulty"),
-        ("4", "Fractal Tree", "Recursion depth and detail by difficulty"),
-        ("5", "Wave Simulation", "Wave resolution and complexity varies"),
-        ("6", "Bouncing Balls", "Ball count: 40→200 (EASY→MAXIMUM)"),
-        ("7", "Plasma Effect", "Effect intensity increases with difficulty"),
-        ("8", "Mandelbrot", "Zoom and iteration depth by difficulty"),
-        ("9", "Tunnel Effect", "Depth and detail increases by difficulty"),
-        ("0", "Starfield", "Star count: 200→450 (EASY→MAXIMUM)"),
-        ("Q", "Interactive Draw", "Drawing complexity scales with difficulty"),
-        ("W", "Noise Field", "Perlin noise scale varies by difficulty"),
-        ("E", "Particle Attractor", "Particle count: 300→800 (EASY→MAXIMUM)"),
+        ("1", "Particle Storm", "Particles and explosions"),
+        ("2", "Polygon Rush", "Rotating polygons"),
+        ("3", "Matrix Rain", "Falling characters"),
+        ("4", "Fractal Tree", "Recursive trees"),
+        ("5", "Wave Simulation", "Wave simulation"),
+        ("6", "Bouncing Balls", "Bouncing balls"),
+        ("7", "Plasma Effect", "Plasma effect"),
+        ("8", "Mandelbrot", "Mandelbrot set"),
+        ("9", "Tunnel Effect", "3D tunnel"),
+        ("0", "Starfield", "Starfield"),
+        ("Q", "Interactive Draw", "Draw with mouse"),
+        ("W", "Noise Field", "Noise field"),
+        ("E", "Particle Attractor", "Particles to cursor"),
     ]
     
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -1613,8 +1614,7 @@ def show_fps_menu():
             if event.type == pygame.KEYDOWN:
                 for key, _, _ in modes:
                     if event.unicode and event.unicode.upper() == key:
-                        # Automatically set to MEDIUM difficulty (no selection menu)
-                        return (key, 2)
+                        return (key, 2)  # Auto MEDIUM difficulty
                 if event.key == pygame.K_ESCAPE:
                     return None
         
@@ -1648,16 +1648,6 @@ def show_fps_menu():
         clock.tick(60)
 
 
-# ─── Difficulty Selection Menu ───────────────────────────────────────────
-
-def show_difficulty_menu():
-    """
-    Removed: Difficulty is automatically set to MEDIUM (level 2).
-    This function is kept for backward compatibility but returns immediately.
-    """
-    return 2
-
-
 # ─── System Tests Menu ───────────────────────────────────────────────────
 
 def show_system_menu():
@@ -1666,10 +1656,10 @@ def show_system_menu():
     CPU, RAM, and Disk benchmarking options.
     """
     modes = [
-        ("C", "CPU Test", "Processor test"),
-        ("M", "RAM Test", "Memory test"),
+        ("A", "CPU Test", "Processor test"),
+        ("S", "RAM Test", "Memory test"),
         ("D", "Disk I/O Test", "Disk test"),
-        ("S", "System Monitor", "System monitor"),
+        ("F", "System Monitor", "System monitor"),
     ]
     
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -1687,7 +1677,7 @@ def show_system_menu():
                 return None
             if event.type == pygame.KEYDOWN:
                 for key, _, _ in modes:
-                    if event.unicode and event.unicode.upper() == key:
+                    if event.unicode.upper() == key:
                         return key
                 if event.key == pygame.K_ESCAPE:
                     return None
@@ -1769,6 +1759,7 @@ def show_welcome_screen():
             "🌐 Web version coming soon!",
             "   Dual-screen architecture for weak PCs:",
             "   - Test screen + Statistics screen",
+            "   - Automatic restart on crash",
         ]
         
         for line in info_lines:
@@ -2432,16 +2423,8 @@ def show_results(game_mode):
 def run_game_mode(mode_key):
     """
     Run selected game mode.
-    Handles game loop and FPS counting.
-    
-    Args:
-        mode_key: Either a string (system tests) or tuple (key, difficulty) for FPS tests
+    Handles game loop, FPS counting, and crash protection.
     """
-    # Handle both formats: string for system tests, tuple for FPS tests with difficulty
-    difficulty = 2  # Default to MEDIUM
-    if isinstance(mode_key, tuple):
-        mode_key, difficulty = mode_key
-    
     # Create mode
     modes_map = {
         "1": ParticleStorm,
@@ -2457,33 +2440,19 @@ def run_game_mode(mode_key):
         "Q": InteractiveDraw,
         "W": NoiseField,
         "E": ParticleAttractor,
-        "C": CPUTest,
-        "M": RAMTest,
+        "A": CPUTest,
+        "S": RAMTest,
         "D": DiskIOTest,
-        "S": SystemMonitor,
+        "F": SystemMonitor,
     }
     
-    # Create game mode with difficulty level
-    # Try to pass difficulty, fall back to no-arg init if needed
-    try:
-        # Make sure mode_key is uppercase
-        mode_key = str(mode_key).upper() if mode_key else "1"
-        if mode_key not in modes_map:
-            print(f"Error: Unknown test key '{mode_key}'")
-            return None
-        game_mode = modes_map[mode_key](difficulty)
-    except TypeError:
-        # Class doesn't accept difficulty parameter
-        try:
-            game_mode = modes_map[mode_key]()
-        except Exception as e:
-            print(f"Error creating game mode: {e}")
-            return None
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
+    game_mode = modes_map[mode_key]()
     
-    # Game mode initialization complete
+    # ===== CRASH PROTECTION VARIABLES =====
+    crash_detected = False
+    fps_history = deque(maxlen=10)
+    frozen_frame_count = 0
+    last_frame_time = time.time()
     
     try:
         screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -2503,8 +2472,24 @@ def run_game_mode(mode_key):
                 dt = min(current_time - last_time, 0.016)
                 last_time = current_time
                 
-                # Get FPS for display
+                # ===== CRASH DETECTION =====
+                time_since_last_frame = current_time - last_frame_time
+                
+                # Detect if system is frozen (no frame updates for 2+ seconds)
+                if time_since_last_frame > 2.0:
+                    frozen_frame_count += 1
+                else:
+                    frozen_frame_count = 0
+                
+                last_frame_time = current_time
+                
+                # Check FPS for critical stress
                 raw_fps = clock.get_fps()
+                fps_history.append(raw_fps)
+                
+                # If FPS < 3 or frozen for 3+ frames = CRASH
+                if raw_fps < 3 or frozen_frame_count >= 3:
+                    crash_detected = True
                 
                 # ===== EVENT HANDLING =====
                 for event in pygame.event.get():
@@ -2513,17 +2498,56 @@ def run_game_mode(mode_key):
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             running = False
-                        if event.key == pygame.K_s:
+                        if event.key == pygame.K_s and not crash_detected:
                             show_settings_menu()
+                        # Allow continuing after crash with 'C' key
+                        if event.key == pygame.K_c and crash_detected:
+                            crash_detected = False
+                            frozen_frame_count = 0
                 
-                # ===== GAME UPDATE =====
+                if not running:
+                    break
+                
+                # ===== SKIP DRAWING IF CRASH DETECTED =====
+                if crash_detected:
+                    # Show crash warning instead of game
+                    screen.fill(BLACK)
+                    
+                    # Red warning border
+                    pygame.draw.rect(screen, RED, (10, 10, WINDOW_WIDTH-20, WINDOW_HEIGHT-20), 5)
+                    
+                    # Warning title
+                    warning_title = font_warning.render("⚠️  SYSTEM CRASH DETECTED", True, RED)
+                    screen.blit(warning_title, (WINDOW_WIDTH//2 - warning_title.get_width()//2, 100))
+                    
+                    # Warning message
+                    msg1 = font_small.render("Your system has crashed or become unresponsive", True, YELLOW)
+                    msg2 = font_small.render(f"Test: {game_mode.name}", True, YELLOW)
+                    msg3 = font_small.render("The program is still running and protected!", True, GREEN)
+                    msg4 = font_small.render("Press C to CONTINUE or ESC to RETURN to menu", True, CYAN)
+                    
+                    screen.blit(msg1, (WINDOW_WIDTH//2 - msg1.get_width()//2, 250))
+                    screen.blit(msg2, (WINDOW_WIDTH//2 - msg2.get_width()//2, 320))
+                    screen.blit(msg3, (WINDOW_WIDTH//2 - msg3.get_width()//2, 420))
+                    screen.blit(msg4, (WINDOW_WIDTH//2 - msg4.get_width()//2, 550))
+                    
+                    # Recommendation
+                    rec_text = font_small.render("RECOMMENDATION: Do not run this test again", True, RED)
+                    screen.blit(rec_text, (WINDOW_WIDTH//2 - rec_text.get_width()//2, 700))
+                    
+                    pygame.display.flip()
+                    clock.tick(30)  # Slow down to prevent further stress
+                    continue
+                
+                # ===== NORMAL GAME RENDERING =====
                 # Controls
                 keys = pygame.key.get_pressed()
                 
                 # Update mode
                 game_mode.update(dt, keys)
                 
-                # Get FPS display value
+                # Get FPS
+                raw_fps = clock.get_fps()
                 current_fps_display = game_mode.get_fps_display(raw_fps, dt)
                 
                 # Render/Draw
@@ -2632,20 +2656,56 @@ def run_game_mode(mode_key):
                 clock.tick()  # Unlimited FPS
                 
             except Exception as frame_error:
-                # Log rendering errors but continue
-                print(f"Frame error: {frame_error}")
+                # Catch rendering errors
+                crash_detected = True
                 continue
         
-        # Show results
-        if GLOBAL_SETTINGS["show_results"]:
+        # Show results (even if crash occurred)
+        if GLOBAL_SETTINGS["show_results"] and not crash_detected:
             show_results(game_mode)
         
         return True
     
     except Exception as e:
-        print(f"Error in test: {e}")
+        print(f"\n{'='*60}")
+        print(f"CRASH PROTECTION ACTIVATED")
+        print(f"{'='*60}")
+        print(f"Test: {game_mode.name}")
+        print(f"Error: {e}")
+        print(f"{'='*60}")
+        print(f"The program has recovered and will return to main menu.")
+        print(f"Do NOT run this test again - it exceeds your system's limits.")
+        print(f"{'='*60}\n")
+        
         import traceback
         traceback.print_exc()
+        
+        # Show crash warning on screen for 3 seconds
+        try:
+            screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+            pygame.display.set_caption("FPS Tester - CRASH RECOVERY")
+            font_title = pygame.font.Font(None, 64)
+            font_text = pygame.font.Font(None, 32)
+            
+            for i in range(3):
+                screen.fill(BLACK)
+                pygame.draw.rect(screen, RED, (20, 20, WINDOW_WIDTH-40, WINDOW_HEIGHT-40), 8)
+                
+                title = font_title.render("SYSTEM CRASHED", True, RED)
+                msg1 = font_text.render(f"Test: {game_mode.name}", True, YELLOW)
+                msg2 = font_text.render("The program has safely recovered!", True, GREEN)
+                msg3 = font_text.render("Returning to main menu in 3 seconds...", True, CYAN)
+                
+                screen.blit(title, (WINDOW_WIDTH//2 - title.get_width()//2, 150))
+                screen.blit(msg1, (WINDOW_WIDTH//2 - msg1.get_width()//2, 300))
+                screen.blit(msg2, (WINDOW_WIDTH//2 - msg2.get_width()//2, 400))
+                screen.blit(msg3, (WINDOW_WIDTH//2 - msg3.get_width()//2, 550))
+                
+                pygame.display.flip()
+                pygame.time.wait(1000)
+        except:
+            pass
+        
         return False
 
 
@@ -2664,7 +2724,6 @@ while True:
     category = show_main_menu()
     
     if category is None:
-        # Exit requested from main menu
         break
     
     # Select test category
@@ -2674,12 +2733,11 @@ while True:
         selected = show_system_menu()
     
     if selected is None:
-        # Back to main menu if no test selected
         continue
     
-    # Run the selected game mode
-    run_game_mode(selected)
-    # Return to main menu after test completes (whether exited or finished)
+    result = run_game_mode(selected)
+    if result is False:
+        break
 
 pygame.quit()
 sys.exit()
