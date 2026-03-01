@@ -1614,7 +1614,9 @@ def show_fps_menu():
             if event.type == pygame.KEYDOWN:
                 for key, _, _ in modes:
                     if event.unicode.upper() == key:
-                        return key
+                        # Show difficulty selection for FPS tests
+                        difficulty = show_difficulty_menu()
+                        return (key, difficulty)
                 if event.key == pygame.K_ESCAPE:
                     return None
         
@@ -1642,6 +1644,64 @@ def show_fps_menu():
             y_pos += 75
         
         hint = font_small.render("Press ESC to go back", True, WHITE)
+        screen.blit(hint, (WINDOW_WIDTH // 2 - hint.get_width() // 2, WINDOW_HEIGHT - 40))
+        
+        pygame.display.flip()
+        clock.tick(60)
+
+
+# ─── Difficulty Selection Menu ───────────────────────────────────────────
+
+def show_difficulty_menu():
+    """
+    Menu to select difficulty level for FPS tests.
+    Different difficulties stress the hardware differently.
+    """
+    difficulties = [
+        ("1", "EASY", "Light load - basic particles/shapes"),
+        ("2", "MEDIUM", "Moderate load - balanced challenge"),
+        ("3", "HARD", "Heavy load - serious stress test"),
+        ("4", "EXTREME", "Maximum load - push to limits"),
+        ("5", "INSANE", "Ultra extreme - break it mode"),
+    ]
+    
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("FPS Tester - Select Difficulty")
+    clock = pygame.time.Clock()
+    font_title = pygame.font.Font(None, 80)
+    font_mode = pygame.font.Font(None, 50)
+    font_desc = pygame.font.Font(None, 32)
+    font_small = pygame.font.Font(None, 28)
+    
+    selecting = True
+    while selecting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return 2  # Default to MEDIUM
+            if event.type == pygame.KEYDOWN:
+                for key, _, _ in difficulties:
+                    if event.unicode.upper() == key:
+                        return int(key)
+                if event.key == pygame.K_ESCAPE:
+                    return 2  # Default to MEDIUM
+        
+        screen.fill(BLACK)
+        
+        title = font_title.render("SELECT DIFFICULTY", True, YELLOW)
+        screen.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 50))
+        
+        y_pos = 180
+        for key, name, desc in difficulties:
+            key_text = font_mode.render(f"{key}", True, GREEN)
+            name_text = font_mode.render(f"{name}", True, YELLOW if key == "2" else CYAN)
+            desc_text = font_desc.render(desc, True, WHITE)
+            
+            screen.blit(key_text, (150, y_pos))
+            screen.blit(name_text, (220, y_pos))
+            screen.blit(desc_text, (220, y_pos + 50))
+            y_pos += 110
+        
+        hint = font_small.render("Default: MEDIUM (2) | ESC to go back", True, WHITE)
         screen.blit(hint, (WINDOW_WIDTH // 2 - hint.get_width() // 2, WINDOW_HEIGHT - 40))
         
         pygame.display.flip()
@@ -2424,7 +2484,15 @@ def run_game_mode(mode_key):
     """
     Run selected game mode.
     Handles game loop, FPS counting, and crash protection.
+    
+    Args:
+        mode_key: Either a string (system tests) or tuple (key, difficulty) for FPS tests
     """
+    # Handle both formats: string for system tests, tuple for FPS tests with difficulty
+    difficulty = 2  # Default to MEDIUM
+    if isinstance(mode_key, tuple):
+        mode_key, difficulty = mode_key
+    
     # Create mode
     modes_map = {
         "1": ParticleStorm,
@@ -2446,7 +2514,8 @@ def run_game_mode(mode_key):
         "S": SystemMonitor,
     }
     
-    game_mode = modes_map[mode_key]()
+    # Create game mode with difficulty level
+    game_mode = modes_map[mode_key](difficulty)
     
     # ===== CRASH PROTECTION VARIABLES =====
     crash_detected = False
@@ -2501,9 +2570,10 @@ def run_game_mode(mode_key):
                         if event.key == pygame.K_s and not crash_detected:
                             show_settings_menu()
                         # Allow continuing after crash with 'C' key
-                        if event.key == pygame.K_c and crash_detected:
-                            crash_detected = False
-                            frozen_frame_count = 0
+                        if event.key == pygame.K_c:
+                            if crash_detected:
+                                crash_detected = False
+                                frozen_frame_count = 0
                 
                 if not running:
                     break
