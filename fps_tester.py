@@ -78,6 +78,12 @@ class ApplicationSettings:
     
     def toggle(self, key: str):
         self.settings[key] = not self.settings.get(key, False)
+    
+    def __getitem__(self, key: str):
+        return self.settings[key]
+    
+    def __setitem__(self, key: str, value):
+        self.settings[key] = value
 
 
 WINDOW_WIDTH = ScreenConfig.WIDTH
@@ -2423,7 +2429,7 @@ def show_results(game_mode):
 def run_game_mode(mode_key):
     """
     Run selected game mode.
-    Handles game loop, FPS counting, and crash protection.
+    Handles game loop, FPS counting, and display.
     """
     # Create mode
     modes_map = {
@@ -2448,7 +2454,7 @@ def run_game_mode(mode_key):
     
     game_mode = modes_map[mode_key]()
     
-    # ===== CRASH PROTECTION VARIABLES =====
+    # ===== CRASH PROTECTION (SILENT) =====
     crash_detected = False
     fps_history = deque(maxlen=10)
     frozen_frame_count = 0
@@ -2459,10 +2465,6 @@ def run_game_mode(mode_key):
         pygame.display.set_caption(f"FPS Tester - {game_mode.name}")
         clock = pygame.time.Clock()
         
-        font_fps = pygame.font.Font(None, 100)
-        font_small = pygame.font.Font(None, 32)
-        font_warning = pygame.font.Font(None, 48)
-        
         running = True
         last_time = time.time()
         
@@ -2472,10 +2474,10 @@ def run_game_mode(mode_key):
                 dt = min(current_time - last_time, 0.016)
                 last_time = current_time
                 
-                # ===== CRASH DETECTION =====
+                # ===== CRASH DETECTION (SILENT) =====
                 time_since_last_frame = current_time - last_frame_time
                 
-                # Detect if system is frozen (no frame updates for 2+ seconds)
+                # Detect if system is frozen
                 if time_since_last_frame > 2.0:
                     frozen_frame_count += 1
                 else:
@@ -2483,11 +2485,11 @@ def run_game_mode(mode_key):
                 
                 last_frame_time = current_time
                 
-                # Check FPS for critical stress
+                # Check FPS
                 raw_fps = clock.get_fps()
                 fps_history.append(raw_fps)
                 
-                # If FPS < 3 or frozen for 3+ frames = CRASH
+                # If FPS < 3 or frozen for 3+ frames = CRASH (но мы не показываем предупреждение)
                 if raw_fps < 3 or frozen_frame_count >= 3:
                     crash_detected = True
                 
@@ -2500,46 +2502,13 @@ def run_game_mode(mode_key):
                             running = False
                         if event.key == pygame.K_s and not crash_detected:
                             show_settings_menu()
-                        # Allow continuing after crash with 'C' key
-                        if event.key == pygame.K_c and crash_detected:
-                            crash_detected = False
-                            frozen_frame_count = 0
                 
                 if not running:
                     break
                 
-                # ===== SKIP DRAWING IF CRASH DETECTED =====
-                if crash_detected:
-                    # Show crash warning instead of game
-                    screen.fill(BLACK)
-                    
-                    # Red warning border
-                    pygame.draw.rect(screen, RED, (10, 10, WINDOW_WIDTH-20, WINDOW_HEIGHT-20), 5)
-                    
-                    # Warning title
-                    warning_title = font_warning.render("⚠️  SYSTEM CRASH DETECTED", True, RED)
-                    screen.blit(warning_title, (WINDOW_WIDTH//2 - warning_title.get_width()//2, 100))
-                    
-                    # Warning message
-                    msg1 = font_small.render("Your system has crashed or become unresponsive", True, YELLOW)
-                    msg2 = font_small.render(f"Test: {game_mode.name}", True, YELLOW)
-                    msg3 = font_small.render("The program is still running and protected!", True, GREEN)
-                    msg4 = font_small.render("Press C to CONTINUE or ESC to RETURN to menu", True, CYAN)
-                    
-                    screen.blit(msg1, (WINDOW_WIDTH//2 - msg1.get_width()//2, 250))
-                    screen.blit(msg2, (WINDOW_WIDTH//2 - msg2.get_width()//2, 320))
-                    screen.blit(msg3, (WINDOW_WIDTH//2 - msg3.get_width()//2, 420))
-                    screen.blit(msg4, (WINDOW_WIDTH//2 - msg4.get_width()//2, 550))
-                    
-                    # Recommendation
-                    rec_text = font_small.render("RECOMMENDATION: Do not run this test again", True, RED)
-                    screen.blit(rec_text, (WINDOW_WIDTH//2 - rec_text.get_width()//2, 700))
-                    
-                    pygame.display.flip()
-                    clock.tick(30)  # Slow down to prevent further stress
-                    continue
+                # ===== GAME RENDERING =====
+                # (Даже если crash_detected, мы все равно рендерим, просто медленнее если нужно)
                 
-                # ===== NORMAL GAME RENDERING =====
                 # Controls
                 keys = pygame.key.get_pressed()
                 
@@ -2554,12 +2523,12 @@ def run_game_mode(mode_key):
                 screen.fill(BLACK)
                 game_mode.draw(screen)
                 
-                # ===== HUD PANEL (RIGHT BOTTOM CORNER) =====
+                # ===== HUD PANEL (TOP LEFT CORNER) =====
                 # Create semi-transparent HUD panel with better styling
-                hud_width = 340
-                hud_height = 240
-                hud_x = WINDOW_WIDTH - hud_width - 15
-                hud_y = WINDOW_HEIGHT - hud_height - 15
+                hud_width = 320
+                hud_height = 200
+                hud_x = 15
+                hud_y = 15
                 
                 # Create HUD surface with transparency
                 hud_surface = pygame.Surface((hud_width, hud_height), pygame.SRCALPHA)
@@ -2632,12 +2601,12 @@ def run_game_mode(mode_key):
                 # Blit HUD to main screen
                 screen.blit(hud_surface, (hud_x, hud_y))
                 
-                # ===== BOTTOM LEFT HINTS PANEL =====
+                # ===== TOP RIGHT CONTROLS PANEL =====
                 if GLOBAL_SETTINGS["show_hints"]:
-                    hints_width = 360
-                    hints_height = 60
-                    hints_x = 15
-                    hints_y = WINDOW_HEIGHT - hints_height - 15
+                    hints_width = 340
+                    hints_height = 70
+                    hints_x = WINDOW_WIDTH - hints_width - 15
+                    hints_y = 15
                     
                     hints_surface = pygame.Surface((hints_width, hints_height), pygame.SRCALPHA)
                     pygame.draw.rect(hints_surface, (15, 15, 35, 200), (0, 0, hints_width, hints_height))
@@ -2654,58 +2623,20 @@ def run_game_mode(mode_key):
                 
                 pygame.display.flip()
                 clock.tick()  # Unlimited FPS
-                
+            
             except Exception as frame_error:
-                # Catch rendering errors
+                # Catch rendering errors (but silently)
                 crash_detected = True
                 continue
         
-        # Show results (even if crash occurred)
-        if GLOBAL_SETTINGS["show_results"] and not crash_detected:
+        # Show results
+        if GLOBAL_SETTINGS["show_results"]:
             show_results(game_mode)
         
         return True
     
     except Exception as e:
-        print(f"\n{'='*60}")
-        print(f"CRASH PROTECTION ACTIVATED")
-        print(f"{'='*60}")
-        print(f"Test: {game_mode.name}")
-        print(f"Error: {e}")
-        print(f"{'='*60}")
-        print(f"The program has recovered and will return to main menu.")
-        print(f"Do NOT run this test again - it exceeds your system's limits.")
-        print(f"{'='*60}\n")
-        
-        import traceback
-        traceback.print_exc()
-        
-        # Show crash warning on screen for 3 seconds
-        try:
-            screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-            pygame.display.set_caption("FPS Tester - CRASH RECOVERY")
-            font_title = pygame.font.Font(None, 64)
-            font_text = pygame.font.Font(None, 32)
-            
-            for i in range(3):
-                screen.fill(BLACK)
-                pygame.draw.rect(screen, RED, (20, 20, WINDOW_WIDTH-40, WINDOW_HEIGHT-40), 8)
-                
-                title = font_title.render("SYSTEM CRASHED", True, RED)
-                msg1 = font_text.render(f"Test: {game_mode.name}", True, YELLOW)
-                msg2 = font_text.render("The program has safely recovered!", True, GREEN)
-                msg3 = font_text.render("Returning to main menu in 3 seconds...", True, CYAN)
-                
-                screen.blit(title, (WINDOW_WIDTH//2 - title.get_width()//2, 150))
-                screen.blit(msg1, (WINDOW_WIDTH//2 - msg1.get_width()//2, 300))
-                screen.blit(msg2, (WINDOW_WIDTH//2 - msg2.get_width()//2, 400))
-                screen.blit(msg3, (WINDOW_WIDTH//2 - msg3.get_width()//2, 550))
-                
-                pygame.display.flip()
-                pygame.time.wait(1000)
-        except:
-            pass
-        
+        print(f"Error in {game_mode.name}: {e}")
         return False
 
 
@@ -2713,31 +2644,33 @@ def run_game_mode(mode_key):
 # APPLICATION ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Show welcome screen
-if not show_welcome_screen():
+if __name__ == "__main__":
+    # Show welcome screen
+    if not show_welcome_screen():
+        pygame.quit()
+        sys.exit()
+
+    # Main application loop
+    while True:
+        # Show main menu
+        category = show_main_menu()
+        
+        if category is None:
+            break
+        
+        # Select test category
+        if category == "fps":
+            selected = show_fps_menu()
+        else:  # system
+            selected = show_system_menu()
+        
+        if selected is None:
+            continue
+        
+        result = run_game_mode(selected)
+        if result is None:
+            break
+        # Если result True или False, просто продолжаем в меню
+
     pygame.quit()
     sys.exit()
-
-# Main application loop
-while True:
-    # Show main menu
-    category = show_main_menu()
-    
-    if category is None:
-        break
-    
-    # Select test category
-    if category == "fps":
-        selected = show_fps_menu()
-    else:  # system
-        selected = show_system_menu()
-    
-    if selected is None:
-        continue
-    
-    result = run_game_mode(selected)
-    if result is False:
-        break
-
-pygame.quit()
-sys.exit()
