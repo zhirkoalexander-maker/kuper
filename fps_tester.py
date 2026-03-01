@@ -554,49 +554,88 @@ class FractalTree(GameMode):
         depth_text = font.render(f"Depth: {self.depth} | Move cursor to rotate", True, WHITE)
         screen.blit(depth_text, (50, 30))
 
-class WaveSimulation(GameMode):
-    """Wave Simulation - wave simulation"""
+class GravityFields(GameMode):
+    """Gravity Fields - particles attracted by gravity points"""
     def __init__(self):
-        super().__init__("Wave Simulation", 4)
-        self.grid_size = 40
-        self.grid_x = WINDOW_WIDTH // self.grid_size
-        self.grid_y = WINDOW_HEIGHT // self.grid_size
-        self.height_map = [[0 for _ in range(self.grid_x)] for _ in range(self.grid_y)]
-        self.velocity_map = [[0 for _ in range(self.grid_x)] for _ in range(self.grid_y)]
+        super().__init__("Gravity Fields", 4)
+        self.particles = []
+        self.gravity_points = []
+        self.particle_count = 300 + self.difficulty * 100
         self.time = 0
+        
+        # Create particles
+        for _ in range(self.particle_count):
+            self.particles.append({
+                'x': random.uniform(0, WINDOW_WIDTH),
+                'y': random.uniform(0, WINDOW_HEIGHT),
+                'vx': random.uniform(-2, 2),
+                'vy': random.uniform(-2, 2),
+                'size': random.randint(2, 5),
+                'color': random.choice([CYAN, MAGENTA, GREEN, YELLOW, BLUE])
+            })
+        
+        # Create gravity points (moving)
+        for i in range(2 + self.difficulty):
+            self.gravity_points.append({
+                'x': random.uniform(200, WINDOW_WIDTH - 200),
+                'y': random.uniform(200, WINDOW_HEIGHT - 200),
+                'strength': 50 + i * 20,
+                'angle': random.uniform(0, 2 * math.pi)
+            })
     
     def update(self, dt, keys):
         self.time += dt
         
-        # Add disturbance to center
-        cx, cy = self.grid_x // 2, self.grid_y // 2
-        force = math.sin(self.time * 5) * 50
-        self.height_map[cy][cx] = force
+        # Move gravity points
+        for gp in self.gravity_points:
+            gp['angle'] += 0.3 * dt
+            gp['x'] = WINDOW_WIDTH // 2 + math.cos(gp['angle']) * 200
+            gp['y'] = WINDOW_HEIGHT // 2 + math.sin(gp['angle']) * 150
         
-        # Wave simulation (very simplified)
-        new_height = [[0 for _ in range(self.grid_x)] for _ in range(self.grid_y)]
-        damping = 0.99
-        
-        for y in range(1, self.grid_y - 1):
-            for x in range(1, self.grid_x - 1):
-                avg = (self.height_map[y-1][x] + self.height_map[y+1][x] + 
-                       self.height_map[y][x-1] + self.height_map[y][x+1]) / 4
-                self.velocity_map[y][x] = (avg - self.height_map[y][x]) * 2
-                new_height[y][x] = self.height_map[y][x] + self.velocity_map[y][x] * damping
-        
-        self.height_map = new_height
+        # Update particles
+        for p in self.particles:
+            # Apply gravity from all points
+            fx, fy = 0, 0
+            for gp in self.gravity_points:
+                dx = gp['x'] - p['x']
+                dy = gp['y'] - p['y']
+                dist = math.sqrt(dx*dx + dy*dy)
+                if dist > 1:
+                    force = gp['strength'] / (dist + 10)
+                    fx += (dx / dist) * force
+                    fy += (dy / dist) * force
+            
+            # Apply velocity
+            p['vx'] += fx * dt
+            p['vy'] += fy * dt
+            
+            # Damping
+            p['vx'] *= 0.98
+            p['vy'] *= 0.98
+            
+            # Update position
+            p['x'] += p['vx'] * dt * 10
+            p['y'] += p['vy'] * dt * 10
+            
+            # Wrap around
+            if p['x'] < 0:
+                p['x'] = WINDOW_WIDTH
+            if p['x'] > WINDOW_WIDTH:
+                p['x'] = 0
+            if p['y'] < 0:
+                p['y'] = WINDOW_HEIGHT
+            if p['y'] > WINDOW_HEIGHT:
+                p['y'] = 0
     
     def draw(self, screen):
-        for y in range(self.grid_y):
-            for x in range(self.grid_x):
-                height = self.height_map[y][x]
-                color_val = int(127 + height)
-                color_val = max(0, min(255, color_val))
-                color = (color_val, 100, 255 - color_val)
-                
-                pygame.draw.rect(screen, color, 
-                                (x * self.grid_size, y * self.grid_size, 
-                                 self.grid_size, self.grid_size))
+        # Draw particles
+        for p in self.particles:
+            pygame.draw.circle(screen, p['color'], (int(p['x']), int(p['y'])), p['size'])
+        
+        # Draw gravity points
+        for gp in self.gravity_points:
+            pygame.draw.circle(screen, RED, (int(gp['x']), int(gp['y'])), 8)
+            pygame.draw.circle(screen, (255, 100, 100), (int(gp['x']), int(gp['y'])), 12, 2)
 
 class BouncingBalls(GameMode):
     """Bouncing Balls - bouncing balls, attracted to mouse"""
@@ -1593,7 +1632,7 @@ def show_fps_menu():
         ("2", "Polygon Rush", "Rotating polygons"),
         ("3", "Matrix Rain", "Falling characters"),
         ("4", "Fractal Tree", "Recursive trees"),
-        ("5", "Wave Simulation", "Wave simulation"),
+        ("5", "Gravity Fields", "Particles in gravity"),
         ("6", "Bouncing Balls", "Bouncing balls"),
         ("7", "Plasma Effect", "Plasma effect"),
         ("8", "Mandelbrot", "Mandelbrot set"),
@@ -2270,6 +2309,71 @@ def get_upgrade_recommendations(avg_fps, cpu_usage, ram_usage, bottleneck):
     return recommendations
 
 
+def show_crash_recommendations(game_mode):
+    """Show recommendations when crash is detected"""
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("FPS Tester - Crash Report")
+    clock = pygame.time.Clock()
+    font_title = pygame.font.Font(None, 80)
+    font_warning = pygame.font.Font(None, 60)
+    font_text = pygame.font.Font(None, 40)
+    font_small = pygame.font.Font(None, 28)
+    
+    showing = True
+    while showing:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            if event.type == pygame.KEYDOWN:
+                if event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
+                    return
+        
+        screen.fill(BLACK)
+        
+        # Red warning border
+        pygame.draw.rect(screen, RED, (20, 20, WINDOW_WIDTH-40, WINDOW_HEIGHT-40), 5)
+        
+        # Title
+        title = font_title.render("⚠️  CRASH DETECTED", True, RED)
+        screen.blit(title, (WINDOW_WIDTH//2 - title.get_width()//2, 40))
+        
+        # Test name
+        test_text = font_warning.render(f"Test: {game_mode.name}", True, YELLOW)
+        screen.blit(test_text, (WINDOW_WIDTH//2 - test_text.get_width()//2, 130))
+        
+        # Separator
+        pygame.draw.line(screen, RED, (50, 220), (WINDOW_WIDTH-50, 220), 2)
+        
+        # Recommendations
+        y_pos = 260
+        
+        rec_title = font_text.render("RECOMMENDATIONS:", True, CYAN)
+        screen.blit(rec_title, (80, y_pos))
+        y_pos += 60
+        
+        recommendations = [
+            "1. Lower the difficulty level",
+            "2. Close other applications",
+            "3. Update your graphics drivers",
+            "4. Check system temperature (CPU/GPU)",
+            "5. Reduce screen resolution or FPS cap",
+            "6. Do not run this test again"
+        ]
+        
+        for rec in recommendations:
+            rec_text = font_small.render(rec, True, WHITE)
+            screen.blit(rec_text, (100, y_pos))
+            y_pos += 45
+        
+        # Footer
+        pygame.draw.line(screen, RED, (50, WINDOW_HEIGHT-90), (WINDOW_WIDTH-50, WINDOW_HEIGHT-90), 2)
+        footer = font_small.render("Press ESC, ENTER or SPACE to return to menu", True, MAGENTA)
+        screen.blit(footer, (WINDOW_WIDTH//2 - footer.get_width()//2, WINDOW_HEIGHT-60))
+        
+        pygame.display.flip()
+        clock.tick(60)
+
+
 def show_results(game_mode):
     """Results screen with recommendations - handles both FPS and system tests"""
     # Determine if this is a system test
@@ -2437,7 +2541,7 @@ def run_game_mode(mode_key):
         "2": PolygonRush,
         "3": MatrixRain,
         "4": FractalTree,
-        "5": WaveSimulation,
+        "5": GravityFields,
         "6": BouncingBalls,
         "7": PlasmaEffect,
         "8": Mandelbrot,
@@ -2631,7 +2735,10 @@ def run_game_mode(mode_key):
         
         # Show results
         if GLOBAL_SETTINGS["show_results"]:
-            show_results(game_mode)
+            if crash_detected:
+                show_crash_recommendations(game_mode)
+            else:
+                show_results(game_mode)
         
         return True
     
