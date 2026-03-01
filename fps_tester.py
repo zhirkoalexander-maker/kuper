@@ -1984,6 +1984,80 @@ def show_menu():
 # RECOMMENDATION SYSTEM
 # ==========================
 
+def get_playable_games(avg_fps):
+    """Get list of games that can be played at this FPS"""
+    games = {
+        "Ultra": {
+            "threshold": 120,
+            "games": [
+                "Cyberpunk 2077 (Max Settings)",
+                "Red Dead Redemption 2 (Ultra)",
+                "Microsoft Flight Simulator",
+                "Star Citizen",
+                "Unreal Engine 5 Games"
+            ]
+        },
+        "High": {
+            "threshold": 90,
+            "games": [
+                "Hogwarts Legacy",
+                "Baldur's Gate 3",
+                "Alan Wake 2",
+                "F1 24",
+                "The Last of Us Part I"
+            ]
+        },
+        "Medium": {
+            "threshold": 60,
+            "games": [
+                "Elden Ring",
+                "Starfield",
+                "The Witcher 3",
+                "Valorant",
+                "CS2 (Counter-Strike 2)"
+            ]
+        },
+        "Low": {
+            "threshold": 45,
+            "games": [
+                "Fortnite",
+                "Minecraft",
+                "Dota 2",
+                "Apex Legends",
+                "Call of Duty Modern Warfare II"
+            ]
+        },
+        "Minimum": {
+            "threshold": 30,
+            "games": [
+                "Retro Games",
+                "Indie Games",
+                "2D Games",
+                "Browser Games",
+                "Older Titles (2015-2018)"
+            ]
+        },
+        "Critical": {
+            "threshold": 0,
+            "games": [
+                "Only Very Light Games",
+                "Text-Based Games",
+                "Very Old Titles",
+                "Casual Mobile Ports"
+            ]
+        }
+    }
+    
+    # Find the appropriate category
+    category = "Critical"
+    for tier, info in games.items():
+        if avg_fps >= info["threshold"]:
+            category = tier
+            break
+    
+    return category, games[category]["games"]
+
+
 def get_performance_recommendations(avg_fps, min_fps, max_fps):
     """Generates recommendations based on FPS"""
     recommendations = []
@@ -2216,53 +2290,20 @@ def get_game_recommendations(avg_fps, cpu_usage, ram_usage):
     """Recommend what games can be played based on stress test results"""
     recommendations = []
     
-    recommendations.append("🎮 Game Recommendations Based on Test Results:")
-    recommendations.append("")
-    recommendations.append("Note: These are estimated based on stress test performance")
+    recommendations.append("🎮 GAMES YOU CAN PLAY:")
     recommendations.append("")
     
-    # Higher FPS in stress tests = better hardware = can handle harder games
-    if avg_fps >= 180:
-        recommendations.append("✓ EXTREME PERFORMANCE: Top-tier gaming machine")
-        recommendations.append("✓ Can handle: 4K Ultra AAA games at 60+ FPS")
-        recommendations.append("✓ Can handle: 1440p Ultra with raytracing")
-        recommendations.append("✓ Can handle: Competitive gaming at 144+ FPS")
-        recommendations.append("✓ VR: All VR titles at maximum settings")
-    elif avg_fps >= 140:
-        recommendations.append("✓ EXCELLENT: High-end gaming system")
-        recommendations.append("✓ Can handle: 1440p Ultra AAA games at 60+ FPS")
-        recommendations.append("✓ Can handle: 1080p Ultra with raytracing at 100+ FPS")
-        recommendations.append("✓ Can handle: Competitive gaming smoothly")
-        recommendations.append("✓ VR: All VR games at high settings")
-    elif avg_fps >= 100:
-        recommendations.append("✓ VERY GOOD: Strong gaming PC")
-        recommendations.append("✓ Can handle: 1080p High/Ultra AAA games at 60+ FPS")
-        recommendations.append("✓ Can handle: Most modern games at good settings")
-        recommendations.append("✓ Can handle: Competitive games at 90+ FPS")
-        recommendations.append("✓ VR: Most VR titles playable")
-    elif avg_fps >= 70:
-        recommendations.append("✓ GOOD: Solid mid-range gaming PC")
-        recommendations.append("✓ Can handle: 1080p Medium/High AAA games")
-        recommendations.append("✓ Can handle: Popular games at comfortable FPS")
-        recommendations.append("• Some AAA ultra/4K may need settings reduction")
-        recommendations.append("• VR: Most titles playable on medium settings")
-    elif avg_fps >= 45:
-        recommendations.append("⚠ ACCEPTABLE: Entry-level gaming")
-        recommendations.append("⚠ Can handle: 1080p Low/Medium settings AAA")
-        recommendations.append("⚠ Can handle: Older/lighter games on high settings")
-        recommendations.append("! Demanding AAA games need lower settings")
-        recommendations.append("! VR: Limited support, lower quality games only")
-    elif avg_fps >= 30:
-        recommendations.append("⚠ MINIMAL: Weak gaming performance")
-        recommendations.append("⚠ Can handle: Indie games, older AAA titles")
-        recommendations.append("⚠ Can handle: Web games, 2D games smoothly")
-        recommendations.append("! Modern AAA games not recommended")
-        recommendations.append("! VR: Not suitable")
-    else:
-        recommendations.append("✗ NOT GAMING-READY: Hardware too weak")
-        recommendations.append("✗ Can only run: Older games, casual/web games")
-        recommendations.append("✗ Not recommended for: Gaming at all")
-        recommendations.append("! Hardware upgrade strongly needed for gaming")
+    # Get playable games based on FPS
+    category, games = get_playable_games(avg_fps)
+    
+    recommendations.append(f"📊 Performance Level: {category.upper()}")
+    recommendations.append("")
+    
+    for game in games:
+        recommendations.append(f"  • {game}")
+    
+    recommendations.append("")
+    recommendations.append("Note: Based on stress test FPS performance")
     
     return recommendations
 
@@ -2309,15 +2350,14 @@ def get_upgrade_recommendations(avg_fps, cpu_usage, ram_usage, bottleneck):
     return recommendations
 
 
-def show_crash_recommendations(game_mode):
-    """Show recommendations when crash is detected"""
+def show_slow_pc_message(game_mode):
+    """Show message when computer is too slow"""
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("FPS Tester - Crash Report")
+    pygame.display.set_caption("FPS Tester - System Message")
     clock = pygame.time.Clock()
-    font_title = pygame.font.Font(None, 80)
-    font_warning = pygame.font.Font(None, 60)
-    font_text = pygame.font.Font(None, 40)
-    font_small = pygame.font.Font(None, 28)
+    font_title = pygame.font.Font(None, 100)
+    font_text = pygame.font.Font(None, 50)
+    font_small = pygame.font.Font(None, 32)
     
     showing = True
     while showing:
@@ -2330,45 +2370,24 @@ def show_crash_recommendations(game_mode):
         
         screen.fill(BLACK)
         
-        # Red warning border
-        pygame.draw.rect(screen, RED, (20, 20, WINDOW_WIDTH-40, WINDOW_HEIGHT-40), 5)
-        
         # Title
-        title = font_title.render("⚠️  CRASH DETECTED", True, RED)
-        screen.blit(title, (WINDOW_WIDTH//2 - title.get_width()//2, 40))
+        title = font_title.render("⚠️  TOO SLOW", True, YELLOW)
+        screen.blit(title, (WINDOW_WIDTH//2 - title.get_width()//2, 100))
+        
+        # Main message
+        msg = font_text.render("Your computer is too slow", True, YELLOW)
+        screen.blit(msg, (WINDOW_WIDTH//2 - msg.get_width()//2, 250))
+        
+        msg2 = font_text.render("for this test", True, YELLOW)
+        screen.blit(msg2, (WINDOW_WIDTH//2 - msg2.get_width()//2, 330))
         
         # Test name
-        test_text = font_warning.render(f"Test: {game_mode.name}", True, YELLOW)
-        screen.blit(test_text, (WINDOW_WIDTH//2 - test_text.get_width()//2, 130))
-        
-        # Separator
-        pygame.draw.line(screen, RED, (50, 220), (WINDOW_WIDTH-50, 220), 2)
-        
-        # Recommendations
-        y_pos = 260
-        
-        rec_title = font_text.render("RECOMMENDATIONS:", True, CYAN)
-        screen.blit(rec_title, (80, y_pos))
-        y_pos += 60
-        
-        recommendations = [
-            "1. Lower the difficulty level",
-            "2. Close other applications",
-            "3. Update your graphics drivers",
-            "4. Check system temperature (CPU/GPU)",
-            "5. Reduce screen resolution or FPS cap",
-            "6. Do not run this test again"
-        ]
-        
-        for rec in recommendations:
-            rec_text = font_small.render(rec, True, WHITE)
-            screen.blit(rec_text, (100, y_pos))
-            y_pos += 45
+        test_text = font_small.render(f"Test: {game_mode.name}", True, CYAN)
+        screen.blit(test_text, (WINDOW_WIDTH//2 - test_text.get_width()//2, 450))
         
         # Footer
-        pygame.draw.line(screen, RED, (50, WINDOW_HEIGHT-90), (WINDOW_WIDTH-50, WINDOW_HEIGHT-90), 2)
-        footer = font_small.render("Press ESC, ENTER or SPACE to return to menu", True, MAGENTA)
-        screen.blit(footer, (WINDOW_WIDTH//2 - footer.get_width()//2, WINDOW_HEIGHT-60))
+        footer = font_small.render("Press ENTER or ESC to continue", True, WHITE)
+        screen.blit(footer, (WINDOW_WIDTH//2 - footer.get_width()//2, WINDOW_HEIGHT-80))
         
         pygame.display.flip()
         clock.tick(60)
@@ -2736,7 +2755,7 @@ def run_game_mode(mode_key):
         # Show results
         if GLOBAL_SETTINGS["show_results"]:
             if crash_detected:
-                show_crash_recommendations(game_mode)
+                show_slow_pc_message(game_mode)
             else:
                 show_results(game_mode)
         
