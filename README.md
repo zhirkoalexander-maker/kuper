@@ -1,23 +1,38 @@
-# FPS Tester v2.1
+# 🎮 FPS TESTER v2.0
 
-Professional performance analysis and stress testing tool for gaming computers.
+Professional GPU/CPU Performance Analysis & Stress Testing Tool
 
-## Features
+## 📊 Features
 
-### 🎮 GPU/CPU Stress Tests
-- **Particle Storm** - Particle effects and explosions
-- **Polygon Rush** - Rotating polygons benchmark
-- **Matrix Rain** - Falling characters test
-- **Fractal Tree** - Recursive rendering test
-- **Wave Simulation** - Physics simulation
-- **Bouncing Balls** - Collision detection test
-- **Plasma Effect** - Complex shader test
-- **Mandelbrot** - Fractal computation
-- **Tunnel Effect** - 3D rendering test
-- **Starfield** - Large-scale object rendering
-- **Interactive Draw** - Mouse-driven drawing
-- **Noise Field** - Perlin noise rendering
-- **Particle Attractor** - Particle physics
+### 🎨 13 GPU Tests
+- **Particle Storm** - Explosions and particle effects
+- **Polygon Rush** - Rotating polygons and transforms
+- **Matrix Rain** - Falling characters effect
+- **Fractal Tree** - Recursive fractal generation
+- **Gravity Fields** - Particles in gravity simulation
+- **Bouncing Balls** - Physics simulation with collisions
+- **Plasma Effect** - Procedural plasma generation
+- **Mandelbrot Set** - Complex fractal calculation
+- **Tunnel Effect** - 3D tunnel rendering
+- **Starfield** - 3D space simulation
+- **Interactive Draw** - Draw with your mouse
+- **Noise Field** - Perlin noise visualization
+- **Particle Attractor** - Particles follow cursor
+
+### ⚡ 4 System Tests
+- **CPU Test** - Processor stress testing
+- **RAM Test** - Memory performance analysis
+- **Disk I/O Test** - Storage read/write speed
+- **System Monitor** - Real-time system statistics
+
+### 📈 Key Features
+- ✓ Real-time FPS display with HUD panel
+- ✓ System monitoring (CPU, RAM, GPU usage)
+- ✓ 5 difficulty levels (EASY to MAXIMUM)
+- ✓ Game recommendations based on test results
+- ✓ Silent crash protection
+- ✓ Detailed performance analysis
+- ✓ Cross-platform support (Windows, macOS, Linux)
 
 ### 💻 System Tests
 - **CPU Test** - Processor load analysis
