@@ -2515,7 +2515,12 @@ def run_game_mode(mode_key):
     }
     
     # Create game mode with difficulty level
-    game_mode = modes_map[mode_key](difficulty)
+    # Try to pass difficulty, fall back to no-arg init if needed
+    try:
+        game_mode = modes_map[mode_key](difficulty)
+    except TypeError:
+        # Class doesn't accept difficulty parameter
+        game_mode = modes_map[mode_key]()
     
     # ===== CRASH PROTECTION VARIABLES =====
     crash_detected = False
