@@ -1613,8 +1613,8 @@ def show_fps_menu():
                 return None
             if event.type == pygame.KEYDOWN:
                 for key, _, _ in modes:
-                    if event.unicode and event.unicode.upper() == key:
-                        return (key, 2)  # Auto MEDIUM difficulty
+                    if event.unicode.upper() == key:
+                        return key
                 if event.key == pygame.K_ESCAPE:
                     return None
         
@@ -2425,11 +2425,6 @@ def run_game_mode(mode_key):
     Run selected game mode.
     Handles game loop, FPS counting, and crash protection.
     """
-    # Handle both formats: string for system tests, tuple (key, difficulty) for FPS tests
-    difficulty = 2  # Default to MEDIUM
-    if isinstance(mode_key, tuple):
-        mode_key, difficulty = mode_key
-    
     # Create mode
     modes_map = {
         "1": ParticleStorm,
@@ -2451,12 +2446,7 @@ def run_game_mode(mode_key):
         "F": SystemMonitor,
     }
     
-    # Create game mode with difficulty level
-    try:
-        game_mode = modes_map[mode_key](difficulty)
-    except TypeError:
-        # Class doesn't accept difficulty parameter
-        game_mode = modes_map[mode_key]()
+    game_mode = modes_map[mode_key]()
     
     # ===== CRASH PROTECTION VARIABLES =====
     crash_detected = False
