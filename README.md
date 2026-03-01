@@ -1,52 +1,50 @@
-# 🎮 FPS TESTER v2.0
+# FPS Tester
 
-Professional GPU/CPU Performance Analysis & Stress Testing Tool
+Test your computer's gaming performance. See what games you can run.
 
-## 📊 Features
+## What it is
 
-### 🎨 13 GPU Tests
-- **Particle Storm** - Explosions and particle effects
-- **Polygon Rush** - Rotating polygons and transforms
-- **Matrix Rain** - Falling characters effect
-- **Fractal Tree** - Recursive fractal generation
-- **Gravity Fields** - Particles in gravity simulation
-- **Bouncing Balls** - Physics simulation with collisions
-- **Plasma Effect** - Procedural plasma generation
-- **Mandelbrot Set** - Complex fractal calculation
-- **Tunnel Effect** - 3D tunnel rendering
-- **Starfield** - 3D space simulation
-- **Interactive Draw** - Draw with your mouse
-- **Noise Field** - Perlin noise visualization
-- **Particle Attractor** - Particles follow cursor
+Quick tool to check if your GPU/CPU is fast enough for games. Run tests, get your FPS, see recommendations.
 
-### ⚡ 4 System Tests
-- **CPU Test** - Processor stress testing
-- **RAM Test** - Memory performance analysis
-- **Disk I/O Test** - Storage read/write speed
-- **System Monitor** - Real-time system statistics
+## How to use
 
-### 📈 Key Features
-- ✓ Real-time FPS display with HUD panel
-- ✓ System monitoring (CPU, RAM, GPU usage)
-- ✓ 5 difficulty levels (EASY to MAXIMUM)
-- ✓ Game recommendations based on test results
-- ✓ Silent crash protection
-- ✓ Detailed performance analysis
-- ✓ Cross-platform support (Windows, macOS, Linux)
+### On desktop (Python)
 
-### 💻 System Tests
-- **CPU Test** - Processor load analysis
-- **RAM Test** - Memory usage monitoring
-- **Disk I/O Test** - Disk performance analysis
-- **System Monitor** - Real-time system health
+```bash
+python fps_tester.py
+```
 
-### Difficulty Levels
-Each FPS test supports 5 difficulty levels:
-- **1 - EASY**: Light load
-- **2 - MEDIUM**: Balanced (default)
-- **3 - HARD**: Heavy stress
-- **4 - EXTREME**: Maximum load
-- **5 - INSANE**: Break-it mode
+Needs pygame and psutil:
+```bash
+pip install pygame psutil
+```
+
+### In browser
+
+Open `browser-tester.html` in any browser. Everything runs locally, no internet needed.
+
+## Tests
+
+**Graphics tests (13):**
+- Particles
+- Polygons  
+- Matrix rain
+- Fractals
+- Gravity
+- Bouncing balls
+- Plasma
+- Mandelbrot
+- Tunnel
+- Starfield
+- Draw
+- Noise
+- Attractor
+
+**System tests (4):**
+- CPU
+- RAM
+- Disk
+- Monitor
 
 ## Controls
 
