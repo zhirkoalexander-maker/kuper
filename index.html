@@ -3,157 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPS Tester - Know Your Hardware</title>
+    <title>FPS Tester</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: system-ui, sans-serif;
             background: #fff;
-            color: #222;
-            line-height: 1.6;
+            color: #000;
         }
         header {
-            padding: 60px 20px;
+            padding: 40px 20px;
             text-align: center;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #ddd;
         }
-        header h1 { font-size: 2.2em; font-weight: 600; margin-bottom: 8px; }
-        header p { font-size: 1em; color: #666; }
-        .container { max-width: 850px; margin: 0 auto; padding: 50px 20px; }
-        section { margin-bottom: 60px; }
-        h2 { font-size: 1.7em; font-weight: 600; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #000; }
-        h3 { font-size: 1.1em; font-weight: 600; margin: 25px 0 12px 0; }
-        p { color: #555; margin-bottom: 12px; }
-        ul { list-style: none; }
-        li { padding: 8px 0 8px 20px; position: relative; color: #555; }
-        li:before { content: "→"; position: absolute; left: 0; }
-        .code { background: #222; color: #0f0; padding: 12px; border-radius: 3px; overflow-x: auto; margin: 12px 0; font-family: 'Monaco', monospace; font-size: 0.9em; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
-        .box { padding: 12px; border: 1px solid #ddd; border-radius: 3px; }
-        .box h4 { font-weight: 600; margin-bottom: 4px; font-size: 0.95em; }
-        .box p { font-size: 0.85em; color: #888; }
-        .games { background: #f9f9f9; padding: 25px; border-radius: 3px; margin: 15px 0; }
-        .game-tier { margin-bottom: 20px; }
-        .game-tier h4 { font-weight: 600; margin-bottom: 8px; }
-        .game-tier ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
-        .game-tier li { background: white; padding: 6px 10px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.9em; }
-        .btn { display: inline-block; background: #000; color: white; padding: 10px 25px; border-radius: 3px; text-decoration: none; margin: 8px 8px 8px 0; transition: background 0.2s; }
-        .btn:hover { background: #333; }
-        .btn-light { background: #f0f0f0; color: #000; border: 1px solid #ddd; }
-        .btn-light:hover { background: #e0e0e0; }
-        footer { background: #f5f5f5; padding: 30px 20px; text-align: center; border-top: 1px solid #eee; color: #999; margin-top: 60px; font-size: 0.9em; }
-        .bg { background: #f5f5f5; padding: 20px; border-radius: 3px; margin: 15px 0; }
-        @media (max-width: 768px) {
-            header h1 { font-size: 1.6em; }
-            h2 { font-size: 1.3em; }
-            .grid { grid-template-columns: 1fr; }
+        header h1 { font-size: 2em; margin-bottom: 5px; }
+        header p { color: #666; }
+        .container { max-width: 700px; margin: 0 auto; padding: 40px 20px; }
+        section { margin-bottom: 50px; }
+        h2 { font-size: 1.4em; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd; }
+        p { line-height: 1.6; color: #444; margin-bottom: 15px; }
+        .big-btn {
+            display: block;
+            background: #000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 30px 0;
         }
+        .big-btn:hover { background: #222; }
+        .tests {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .test-box {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        footer { padding: 30px 20px; text-align: center; border-top: 1px solid #ddd; color: #888; font-size: 13px; }
     </style>
 </head>
 <body>
     <header>
         <h1>FPS Tester</h1>
-        <p>See what your computer can actually do</p>
+        <p>Performance testing in your browser</p>
     </header>
     
     <div class="container">
         <section>
-            <h2>What</h2>
-            <p>FPS Tester runs GPU and CPU stress tests. Real numbers. Real results. Tells you which games you can actually play on your hardware.</p>
-        </section>
-        
-        <section>
-            <h2>Install</h2>
-            <div class="bg">
-                <div class="code">git clone https://github.com/zhirkoalexander-maker/kuper.git
-cd kuper && python -m venv .venv
-source .venv/bin/activate
-pip install pygame psutil
-python fps_tester.py</div>
-            </div>
-            <h3>Usage</h3>
-            <ul>
-                <li>Pick a test (13 GPU + 4 System)</li>
-                <li>Watch FPS in the corner</li>
-                <li>Press ESC when done</li>
-                <li>Get game recommendations</li>
-            </ul>
+            <p>
+                Run real-time stress tests on your GPU and CPU. See how many frames per second your hardware can handle.
+            </p>
+            
+            <a href="browser-tester.html" class="big-btn">Launch Tests →</a>
         </section>
         
         <section>
             <h2>13 GPU Tests</h2>
-            <div class="grid">
-                <div class="box"><h4>Particle Storm</h4><p>Explosions</p></div>
-                <div class="box"><h4>Polygon Rush</h4><p>Rotating shapes</p></div>
-                <div class="box"><h4>Matrix Rain</h4><p>Falling chars</p></div>
-                <div class="box"><h4>Fractal Tree</h4><p>Recursive</p></div>
-                <div class="box"><h4>Gravity Fields</h4><p>Physics</p></div>
-                <div class="box"><h4>Bouncing Balls</h4><p>Collisions</p></div>
-                <div class="box"><h4>Plasma</h4><p>Generation</p></div>
-                <div class="box"><h4>Mandelbrot</h4><p>Fractals</p></div>
-                <div class="box"><h4>Tunnel</h4><p>3D</p></div>
-                <div class="box"><h4>Starfield</h4><p>Space</p></div>
-                <div class="box"><h4>Draw</h4><p>Interactive</p></div>
-                <div class="box"><h4>Noise Field</h4><p>Perlin</p></div>
-                <div class="box"><h4>Particle Attractor</h4><p>Follow cursor</p></div>
+            <div class="tests">
+                <div class="test-box">Particle Storm</div>
+                <div class="test-box">Polygon Rush</div>
+                <div class="test-box">Matrix Rain</div>
+                <div class="test-box">Fractal Tree</div>
+                <div class="test-box">Gravity Fields</div>
+                <div class="test-box">Bouncing Balls</div>
+                <div class="test-box">Plasma</div>
+                <div class="test-box">Mandelbrot</div>
+                <div class="test-box">Tunnel</div>
+                <div class="test-box">Starfield</div>
+                <div class="test-box">Interactive Draw</div>
+                <div class="test-box">Noise Field</div>
+                <div class="test-box">Particle Attractor</div>
             </div>
         </section>
         
         <section>
             <h2>4 System Tests</h2>
-            <div class="grid">
-                <div class="box"><h4>CPU</h4><p>Processor</p></div>
-                <div class="box"><h4>RAM</h4><p>Memory</p></div>
-                <div class="box"><h4>Disk I/O</h4><p>Storage</p></div>
-                <div class="box"><h4>Monitor</h4><p>Live stats</p></div>
+            <div class="tests">
+                <div class="test-box">CPU Load</div>
+                <div class="test-box">RAM Test</div>
+                <div class="test-box">Disk I/O</div>
+                <div class="test-box">Monitor</div>
             </div>
         </section>
         
         <section>
-            <h2>Games You Can Play</h2>
-            <div class="games">
-                <div class="game-tier">
-                    <h4>120+ FPS</h4>
-                    <ul><li>Cyberpunk 2077</li><li>Red Dead 2</li><li>Flight Sim</li></ul>
-                </div>
-                <div class="game-tier">
-                    <h4>90+ FPS</h4>
-                    <ul><li>Hogwarts Legacy</li><li>Baldur's Gate 3</li><li>Alan Wake 2</li></ul>
-                </div>
-                <div class="game-tier">
-                    <h4>60+ FPS</h4>
-                    <ul><li>Elden Ring</li><li>Starfield</li><li>Witcher 3</li></ul>
-                </div>
-                <div class="game-tier">
-                    <h4>45+ FPS</h4>
-                    <ul><li>Fortnite</li><li>Minecraft</li><li>Dota 2</li></ul>
-                </div>
-                <div class="game-tier">
-                    <h4>30+ FPS</h4>
-                    <ul><li>Indie games</li><li>2D games</li><li>Older titles</li></ul>
-                </div>
-            </div>
-        </section>
-        
-        <section>
-            <h2>Controls</h2>
-            <ul>
-                <li><strong>ESC</strong> - Exit</li>
-                <li><strong>S</strong> - Settings</li>
-                <li><strong>Arrow/A,D</strong> - Navigate</li>
-                <li><strong>ENTER/SPACE</strong> - Select</li>
-            </ul>
-        </section>
-        
-        <section style="text-align: center; padding: 30px 0; border-top: 1px solid #eee;">
-            <a href="https://github.com/zhirkoalexander-maker/kuper" class="btn">GitHub</a>
-            <a href="https://github.com/zhirkoalexander-maker/kuper/releases" class="btn btn-light">Download</a>
+            <h2>How it works</h2>
+            <p>
+                Click Launch to start testing. Each test measures FPS in real time. Press ESC to exit and return to menu. Your performance determines which games you can play.
+            </p>
         </section>
     </div>
     
     <footer>
-        <p>FPS Tester — Performance testing tool</p>
-        <p>Python, pygame, psutil</p>
+        FPS Tester • Browser version
     </footer>
 </body>
 </html>
