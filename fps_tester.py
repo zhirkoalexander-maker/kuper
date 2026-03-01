@@ -4,7 +4,7 @@
 ║                 Performance Analysis & Stress Testing Tool                 ║
 ║                                                                            ║
 ║  A professional desktop application for testing GPU/CPU performance       ║
-║  with real-time metrics, system monitoring, and crash protection.         ║
+║  with real-time metrics and system monitoring.                            ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 """
 
@@ -64,7 +64,6 @@ class ApplicationSettings:
         "show_hints": True,
         "show_mode_stats": True,
         "show_results": True,
-        "crash_protection": True,
     }
     
     def __init__(self):
@@ -1770,7 +1769,6 @@ def show_welcome_screen():
             "🌐 Web version coming soon!",
             "   Dual-screen architecture for weak PCs:",
             "   - Test screen + Statistics screen",
-            "   - Automatic restart on crash",
         ]
         
         for line in info_lines:
@@ -2434,7 +2432,7 @@ def show_results(game_mode):
 def run_game_mode(mode_key):
     """
     Run selected game mode.
-    Handles game loop, FPS counting, and crash protection.
+    Handles game loop and FPS counting.
     
     Args:
         mode_key: Either a string (system tests) or tuple (key, difficulty) for FPS tests
@@ -2485,11 +2483,7 @@ def run_game_mode(mode_key):
         print(f"Error: {e}")
         return None
     
-    # ===== CRASH PROTECTION VARIABLES =====
-    crash_detected = False
-    fps_history = deque(maxlen=10)
-    frozen_frame_count = 0
-    last_frame_time = time.time()
+    # Game mode initialization complete
     
     try:
         screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -2509,27 +2503,8 @@ def run_game_mode(mode_key):
                 dt = min(current_time - last_time, 0.016)
                 last_time = current_time
                 
-                # ===== CRASH DETECTION =====
-                # Crash detection is disabled - let test run freely without interruption
-                # User can still press ESC to exit test manually
-                
-                time_since_last_frame = current_time - last_frame_time
-                
-                # Detect if system is frozen (no frame updates for 2+ seconds)
-                if time_since_last_frame > 2.0:
-                    frozen_frame_count += 1
-                else:
-                    frozen_frame_count = 0
-                
-                last_frame_time = current_time
-                
-                # Check FPS for critical stress (DISABLED - let test run free)
+                # Get FPS for display
                 raw_fps = clock.get_fps()
-                fps_history.append(raw_fps)
-                
-                # Crash detection disabled - removed to allow tests to run without interruption
-                # if crash_detection_enabled and (raw_fps < 3 or frozen_frame_count >= 3):
-                #     crash_detected = True
                 
                 # ===== EVENT HANDLING =====
                 for event in pygame.event.get():
@@ -2538,50 +2513,9 @@ def run_game_mode(mode_key):
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             running = False
-                        if event.key == pygame.K_s and not crash_detected:
+                        if event.key == pygame.K_s:
                             show_settings_menu()
-                        # Allow continuing after crash with 'C' key (uppercase or lowercase)
-                        if event.key == pygame.K_c:
-                            if crash_detected:
-                                crash_detected = False
-                                frozen_frame_count = 0
-                                last_frame_time = current_time
-                                fps_history.clear()
-                                last_time = current_time
                 # ===== SKIP DRAWING IF CRASH DETECTED =====
-                if crash_detected:
-                    # Show crash warning instead of game
-                    screen.fill(BLACK)
-                    
-                    # Red warning border
-                    pygame.draw.rect(screen, RED, (10, 10, WINDOW_WIDTH-20, WINDOW_HEIGHT-20), 5)
-                    
-                    # Warning title
-                    warning_title = font_warning.render("⚠️  SYSTEM CRASH DETECTED", True, RED)
-                    screen.blit(warning_title, (WINDOW_WIDTH//2 - warning_title.get_width()//2, 100))
-                    
-                    # Warning message
-                    msg1 = font_small.render("Your system has crashed or become unresponsive", True, YELLOW)
-                    msg2 = font_small.render(f"Test: {game_mode.name}", True, YELLOW)
-                    msg3 = font_small.render("The program is still running and protected!", True, GREEN)
-                    msg4 = font_small.render("Press C to CONTINUE or ESC to RETURN to menu", True, CYAN)
-                    
-                    screen.blit(msg1, (WINDOW_WIDTH//2 - msg1.get_width()//2, 250))
-                    screen.blit(msg2, (WINDOW_WIDTH//2 - msg2.get_width()//2, 320))
-                    screen.blit(msg3, (WINDOW_WIDTH//2 - msg3.get_width()//2, 420))
-                    screen.blit(msg4, (WINDOW_WIDTH//2 - msg4.get_width()//2, 550))
-                    
-                    # Recommendation
-                    rec_text = font_small.render("RECOMMENDATION: Do not run this test again", True, RED)
-                    screen.blit(rec_text, (WINDOW_WIDTH//2 - rec_text.get_width()//2, 700))
-                    
-                    pygame.display.flip()
-                    clock.tick(30)  # Slow down to prevent further stress
-                    # Reset timing after displaying crash screen
-                    last_time = current_time
-                    continue
-                
-                # ===== NORMAL GAME RENDERING =====
                 # Controls
                 keys = pygame.key.get_pressed()
                 
@@ -2702,52 +2636,16 @@ def run_game_mode(mode_key):
                 crash_detected = True
                 continue
         
-        # Show results (even if crash occurred)
-        if GLOBAL_SETTINGS["show_results"] and not crash_detected:
+        # Show results
+        if GLOBAL_SETTINGS["show_results"]:
             show_results(game_mode)
         
         return True
     
     except Exception as e:
-        print(f"\n{'='*60}")
-        print(f"CRASH PROTECTION ACTIVATED")
-        print(f"{'='*60}")
-        print(f"Test: {game_mode.name}")
-        print(f"Error: {e}")
-        print(f"{'='*60}")
-        print(f"The program has recovered and will return to main menu.")
-        print(f"Do NOT run this test again - it exceeds your system's limits.")
-        print(f"{'='*60}\n")
-        
+        print(f"Error in test: {e}")
         import traceback
         traceback.print_exc()
-        
-        # Show crash warning on screen for 3 seconds
-        try:
-            screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-            pygame.display.set_caption("FPS Tester - CRASH RECOVERY")
-            font_title = pygame.font.Font(None, 64)
-            font_text = pygame.font.Font(None, 32)
-            
-            for i in range(3):
-                screen.fill(BLACK)
-                pygame.draw.rect(screen, RED, (20, 20, WINDOW_WIDTH-40, WINDOW_HEIGHT-40), 8)
-                
-                title = font_title.render("SYSTEM CRASHED", True, RED)
-                msg1 = font_text.render(f"Test: {game_mode.name}", True, YELLOW)
-                msg2 = font_text.render("The program has safely recovered!", True, GREEN)
-                msg3 = font_text.render("Returning to main menu in 3 seconds...", True, CYAN)
-                
-                screen.blit(title, (WINDOW_WIDTH//2 - title.get_width()//2, 150))
-                screen.blit(msg1, (WINDOW_WIDTH//2 - msg1.get_width()//2, 300))
-                screen.blit(msg2, (WINDOW_WIDTH//2 - msg2.get_width()//2, 400))
-                screen.blit(msg3, (WINDOW_WIDTH//2 - msg3.get_width()//2, 550))
-                
-                pygame.display.flip()
-                pygame.time.wait(1000)
-        except:
-            pass
-        
         return False
 
 
