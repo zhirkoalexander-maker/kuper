@@ -1580,22 +1580,22 @@ def show_main_menu():
 def show_fps_menu():
     """
     Menu to select FPS mode.
-    Displays all available GPU/CPU stress tests with descriptions.
+    Displays all available GPU/CPU stress tests with difficulty levels.
     """
     modes = [
-        ("1", "Particle Storm", "Particles and explosions"),
-        ("2", "Polygon Rush", "Rotating polygons"),
-        ("3", "Matrix Rain", "Falling characters"),
-        ("4", "Fractal Tree", "Recursive trees"),
-        ("5", "Wave Simulation", "Wave simulation"),
-        ("6", "Bouncing Balls", "Bouncing balls"),
-        ("7", "Plasma Effect", "Plasma effect"),
-        ("8", "Mandelbrot", "Mandelbrot set"),
-        ("9", "Tunnel Effect", "3D tunnel"),
-        ("0", "Starfield", "Starfield"),
-        ("Q", "Interactive Draw", "Draw with mouse"),
-        ("W", "Noise Field", "Noise field"),
-        ("E", "Particle Attractor", "Particles to cursor"),
+        ("1", "Particle Storm", "Varies particle count by difficulty (EASY→HARD)"),
+        ("2", "Polygon Rush", "Polygon load adjusts with difficulty level"),
+        ("3", "Matrix Rain", "Character count scales 1-5 with difficulty"),
+        ("4", "Fractal Tree", "Recursion depth and detail by difficulty"),
+        ("5", "Wave Simulation", "Wave resolution and complexity varies"),
+        ("6", "Bouncing Balls", "Ball count: 40→200 (EASY→MAXIMUM)"),
+        ("7", "Plasma Effect", "Effect intensity increases with difficulty"),
+        ("8", "Mandelbrot", "Zoom and iteration depth by difficulty"),
+        ("9", "Tunnel Effect", "Depth and detail increases by difficulty"),
+        ("0", "Starfield", "Star count: 200→450 (EASY→MAXIMUM)"),
+        ("Q", "Interactive Draw", "Drawing complexity scales with difficulty"),
+        ("W", "Noise Field", "Perlin noise scale varies by difficulty"),
+        ("E", "Particle Attractor", "Particle count: 300→800 (EASY→MAXIMUM)"),
     ]
     
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -2574,15 +2574,14 @@ def run_game_mode(mode_key):
                             running = False
                         if event.key == pygame.K_s and not crash_detected:
                             show_settings_menu()
-                        # Allow continuing after crash with 'C' key
-                        if event.key == pygame.K_c:
-                            if crash_detected:
-                                crash_detected = False
-                                frozen_frame_count = 0
-                
-                if not running:
-                    break
-                
+                    # Allow continuing after crash with 'C' key (uppercase or lowercase)
+                    if event.key == pygame.K_c:
+                        if crash_detected:
+                            crash_detected = False
+                            frozen_frame_count = 0
+                            last_frame_time = current_time
+                            fps_history.clear()
+                            last_time = current_time
                 # ===== SKIP DRAWING IF CRASH DETECTED =====
                 if crash_detected:
                     # Show crash warning instead of game
@@ -2612,6 +2611,8 @@ def run_game_mode(mode_key):
                     
                     pygame.display.flip()
                     clock.tick(30)  # Slow down to prevent further stress
+                    # Reset timing after displaying crash screen
+                    last_time = current_time
                     continue
                 
                 # ===== NORMAL GAME RENDERING =====
