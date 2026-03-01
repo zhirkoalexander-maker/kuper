@@ -2574,14 +2574,14 @@ def run_game_mode(mode_key):
                             running = False
                         if event.key == pygame.K_s and not crash_detected:
                             show_settings_menu()
-                    # Allow continuing after crash with 'C' key (uppercase or lowercase)
-                    if event.key == pygame.K_c:
-                        if crash_detected:
-                            crash_detected = False
-                            frozen_frame_count = 0
-                            last_frame_time = current_time
-                            fps_history.clear()
-                            last_time = current_time
+                        # Allow continuing after crash with 'C' key (uppercase or lowercase)
+                        if event.key == pygame.K_c:
+                            if crash_detected:
+                                crash_detected = False
+                                frozen_frame_count = 0
+                                last_frame_time = current_time
+                                fps_history.clear()
+                                last_time = current_time
                 # ===== SKIP DRAWING IF CRASH DETECTED =====
                 if crash_detected:
                     # Show crash warning instead of game
