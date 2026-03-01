@@ -42,3 +42,4 @@ env/
 *.bak
 *.tmp
 .git/hooks/
+venv_new/
