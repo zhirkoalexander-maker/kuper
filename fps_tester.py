@@ -1613,7 +1613,7 @@ def show_fps_menu():
                 return None
             if event.type == pygame.KEYDOWN:
                 for key, _, _ in modes:
-                    if event.unicode.upper() == key:
+                    if event.unicode and event.unicode.upper() == key:
                         # Automatically set to MEDIUM difficulty (no selection menu)
                         return (key, 2)
                 if event.key == pygame.K_ESCAPE:
@@ -1688,7 +1688,7 @@ def show_system_menu():
                 return None
             if event.type == pygame.KEYDOWN:
                 for key, _, _ in modes:
-                    if event.unicode.upper() == key:
+                    if event.unicode and event.unicode.upper() == key:
                         return key
                 if event.key == pygame.K_ESCAPE:
                     return None
@@ -2468,10 +2468,22 @@ def run_game_mode(mode_key):
     # Create game mode with difficulty level
     # Try to pass difficulty, fall back to no-arg init if needed
     try:
+        # Make sure mode_key is uppercase
+        mode_key = str(mode_key).upper() if mode_key else "1"
+        if mode_key not in modes_map:
+            print(f"Error: Unknown test key '{mode_key}'")
+            return None
         game_mode = modes_map[mode_key](difficulty)
     except TypeError:
         # Class doesn't accept difficulty parameter
-        game_mode = modes_map[mode_key]()
+        try:
+            game_mode = modes_map[mode_key]()
+        except Exception as e:
+            print(f"Error creating game mode: {e}")
+            return None
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
     
     # ===== CRASH PROTECTION VARIABLES =====
     crash_detected = False
