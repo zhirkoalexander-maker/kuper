@@ -2490,8 +2490,6 @@ def run_game_mode(mode_key):
     fps_history = deque(maxlen=10)
     frozen_frame_count = 0
     last_frame_time = time.time()
-    crash_detection_enabled = False  # Don't check for crash in first 5 seconds
-    crash_detection_start_time = time.time()
     
     try:
         screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -2512,10 +2510,8 @@ def run_game_mode(mode_key):
                 last_time = current_time
                 
                 # ===== CRASH DETECTION =====
-                # Enable crash detection only after 5 seconds of running
-                if not crash_detection_enabled:
-                    if current_time - crash_detection_start_time > 5.0:
-                        crash_detection_enabled = True
+                # Crash detection is disabled - let test run freely without interruption
+                # User can still press ESC to exit test manually
                 
                 time_since_last_frame = current_time - last_frame_time
                 
@@ -2527,13 +2523,13 @@ def run_game_mode(mode_key):
                 
                 last_frame_time = current_time
                 
-                # Check FPS for critical stress (only after 5 seconds)
+                # Check FPS for critical stress (DISABLED - let test run free)
                 raw_fps = clock.get_fps()
                 fps_history.append(raw_fps)
                 
-                # If FPS < 3 or frozen for 3+ frames = CRASH (only if detection enabled)
-                if crash_detection_enabled and (raw_fps < 3 or frozen_frame_count >= 3):
-                    crash_detected = True
+                # Crash detection disabled - removed to allow tests to run without interruption
+                # if crash_detection_enabled and (raw_fps < 3 or frozen_frame_count >= 3):
+                #     crash_detected = True
                 
                 # ===== EVENT HANDLING =====
                 for event in pygame.event.get():
