@@ -2515,15 +2515,15 @@ def run_game_mode(mode_key):
                             running = False
                         if event.key == pygame.K_s:
                             show_settings_menu()
-                # ===== SKIP DRAWING IF CRASH DETECTED =====
+                
+                # ===== GAME UPDATE =====
                 # Controls
                 keys = pygame.key.get_pressed()
                 
                 # Update mode
                 game_mode.update(dt, keys)
                 
-                # Get FPS
-                raw_fps = clock.get_fps()
+                # Get FPS display value
                 current_fps_display = game_mode.get_fps_display(raw_fps, dt)
                 
                 # Render/Draw
@@ -2632,8 +2632,8 @@ def run_game_mode(mode_key):
                 clock.tick()  # Unlimited FPS
                 
             except Exception as frame_error:
-                # Catch rendering errors
-                crash_detected = True
+                # Log rendering errors but continue
+                print(f"Frame error: {frame_error}")
                 continue
         
         # Show results
