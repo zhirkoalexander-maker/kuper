@@ -1614,9 +1614,8 @@ def show_fps_menu():
             if event.type == pygame.KEYDOWN:
                 for key, _, _ in modes:
                     if event.unicode.upper() == key:
-                        # Show difficulty selection for FPS tests
-                        difficulty = show_difficulty_menu()
-                        return (key, difficulty)
+                        # Automatically set to MEDIUM difficulty (no selection menu)
+                        return (key, 2)
                 if event.key == pygame.K_ESCAPE:
                     return None
         
@@ -1654,58 +1653,10 @@ def show_fps_menu():
 
 def show_difficulty_menu():
     """
-    Menu to select difficulty level for FPS tests.
-    Different difficulties stress the hardware differently.
+    Removed: Difficulty is automatically set to MEDIUM (level 2).
+    This function is kept for backward compatibility but returns immediately.
     """
-    difficulties = [
-        ("1", "EASY", "Light load - basic particles/shapes"),
-        ("2", "MEDIUM", "Moderate load - balanced challenge"),
-        ("3", "HARD", "Heavy load - serious stress test"),
-        ("4", "EXTREME", "Maximum load - push to limits"),
-        ("5", "INSANE", "Ultra extreme - break it mode"),
-    ]
-    
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("FPS Tester - Select Difficulty")
-    clock = pygame.time.Clock()
-    font_title = pygame.font.Font(None, 80)
-    font_mode = pygame.font.Font(None, 50)
-    font_desc = pygame.font.Font(None, 32)
-    font_small = pygame.font.Font(None, 28)
-    
-    selecting = True
-    while selecting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return 2  # Default to MEDIUM
-            if event.type == pygame.KEYDOWN:
-                for key, _, _ in difficulties:
-                    if event.unicode.upper() == key:
-                        return int(key)
-                if event.key == pygame.K_ESCAPE:
-                    return 2  # Default to MEDIUM
-        
-        screen.fill(BLACK)
-        
-        title = font_title.render("SELECT DIFFICULTY", True, YELLOW)
-        screen.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 50))
-        
-        y_pos = 180
-        for key, name, desc in difficulties:
-            key_text = font_mode.render(f"{key}", True, GREEN)
-            name_text = font_mode.render(f"{name}", True, YELLOW if key == "2" else CYAN)
-            desc_text = font_desc.render(desc, True, WHITE)
-            
-            screen.blit(key_text, (150, y_pos))
-            screen.blit(name_text, (220, y_pos))
-            screen.blit(desc_text, (220, y_pos + 50))
-            y_pos += 110
-        
-        hint = font_small.render("Default: MEDIUM (2) | ESC to go back", True, WHITE)
-        screen.blit(hint, (WINDOW_WIDTH // 2 - hint.get_width() // 2, WINDOW_HEIGHT - 40))
-        
-        pygame.display.flip()
-        clock.tick(60)
+    return 2
 
 
 # ─── System Tests Menu ───────────────────────────────────────────────────
