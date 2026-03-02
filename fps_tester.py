@@ -14,10 +14,12 @@ import time
 import random
 import math
 import os
+import json
 from collections import deque
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Tuple, List, Dict, Optional
+from datetime import datetime
 
 try:
     import psutil
@@ -26,6 +28,67 @@ except ImportError:
     HAS_PSUTIL = False
 
 pygame.init()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RESULTS LOGGER
+# ═══════════════════════════════════════════════════════════════════════════
+
+class ResultsLogger:
+    """Log all test results to a file"""
+    
+    def __init__(self):
+        self.log_file = "test_results.json"
+        self.results = self.load_results()
+    
+    def load_results(self):
+        """Load existing results from file"""
+        if os.path.exists(self.log_file):
+            try:
+                with open(self.log_file, 'r') as f:
+                    return json.load(f)
+            except:
+                return []
+        return []
+    
+    def save_test(self, test_name, avg_fps, min_fps, max_fps):
+        """Save a test result"""
+        result = {
+            "test": test_name,
+            "avg_fps": round(avg_fps, 2),
+            "min_fps": round(min_fps, 2),
+            "max_fps": round(max_fps, 2),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        self.results.append(result)
+        self._write_file()
+    
+    def _write_file(self):
+        """Write results to file"""
+        try:
+            with open(self.log_file, 'w') as f:
+                json.dump(self.results, f, indent=2)
+        except:
+            pass
+    
+    def get_recent(self, limit=5):
+        """Get recent results"""
+        return self.results[-limit:]
+    
+    def get_stats(self, test_name):
+        """Get statistics for a specific test"""
+        test_results = [r for r in self.results if r["test"] == test_name]
+        if not test_results:
+            return None
+        avg = sum(r["avg_fps"] for r in test_results) / len(test_results)
+        return {
+            "count": len(test_results),
+            "avg": round(avg, 2),
+            "best": max(r["avg_fps"] for r in test_results),
+            "worst": min(r["avg_fps"] for r in test_results)
+        }
+
+LOGGER = ResultsLogger()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1488,103 +1551,101 @@ class ParticleAttractor(GameMode):
 # ─── Main Menu ───────────────────────────────────────────────────────────
 
 def show_main_menu():
-    """
-    Main menu - choose between FPS, System tests and Settings.
-    Provides visual category selection with animated background.
-    """
+    """Simple main menu"""
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("FPS Tester - Main Menu")
+    pygame.display.set_caption("FPS Tester")
     clock = pygame.time.Clock()
-    font_title = pygame.font.Font(None, 100)
-    font_mode = pygame.font.Font(None, 50)
-    font_desc = pygame.font.Font(None, 32)
-    font_small = pygame.font.Font(None, 28)
+    font_title = pygame.font.Font(None, 80)
+    font_menu = pygame.font.Font(None, 50)
+    font_small = pygame.font.Font(None, 32)
     
     selecting = True
-    highlight = 0  # 0 = FPS Tests, 1 = System Tests, 2 = Settings
-    
-    # Background animation
-    particles = []
-    for _ in range(20):
-        particles.append({
-            'x': random.randint(0, WINDOW_WIDTH),
-            'y': random.randint(0, WINDOW_HEIGHT),
-            'vx': random.uniform(-0.5, 0.5),
-            'vy': random.uniform(-1, 0),
-            'size': random.randint(1, 3),
-            'color': random.choice([CYAN, MAGENTA, GREEN])
-        })
     
     while selecting:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return None
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                    highlight = (highlight - 1) % 3
-                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                    highlight = (highlight + 1) % 3
-                if event.key == pygame.K_UP:
-                    highlight = (highlight - 1) % 3
-                if event.key == pygame.K_DOWN:
-                    highlight = (highlight + 1) % 3
-                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
-                    if highlight == 0:
-                        return "fps"
-                    elif highlight == 1:
-                        return "system"
-                    else:
-                        show_settings_menu()
                 if event.key == pygame.K_ESCAPE:
                     return None
-                if event.unicode == "1":
+                if event.unicode == "1" or event.key == pygame.K_RETURN:
                     return "fps"
                 if event.unicode == "2":
                     return "system"
                 if event.unicode == "3":
-                    show_settings_menu()
-        
-        # Update background particles
-        for p in particles:
-            p['y'] += p['vy']
-            p['x'] += p['vx']
-            if p['y'] < -10:
-                p['y'] = WINDOW_HEIGHT + 10
-                p['x'] = random.randint(0, WINDOW_WIDTH)
+                    show_recent_results()
         
         screen.fill(BLACK)
         
-        # Draw background with particles
-        for p in particles:
-            pygame.draw.circle(screen, p['color'], (int(p['x']), int(p['y'])), p['size'])
+        # Title
+        title = font_title.render("FPS Tester", True, GREEN)
+        screen.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 50))
         
-        # Title with effect
-        title = font_title.render("FPS TESTER", True, YELLOW)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 40))
-        # Add glow
-        for offset in [4, 2]:
-            shadow = font_title.render("FPS TESTER", True, (50, 50, 0))
-            shadow_rect = shadow.get_rect(center=(WINDOW_WIDTH // 2 + offset, 40 + offset))
-            screen.blit(shadow, shadow_rect)
-        screen.blit(title, title_rect)
+        # Menu items
+        y = 200
         
-        subtitle = font_small.render("Select test category or settings", True, WHITE)
-        screen.blit(subtitle, (WINDOW_WIDTH // 2 - subtitle.get_width() // 2, 160))
+        menu1 = font_menu.render("1 - FPS Tests", True, CYAN)
+        screen.blit(menu1, (WINDOW_WIDTH // 2 - menu1.get_width() // 2, y))
+        y += 100
         
-        # FPS Tests
-        fps_color = CYAN if highlight == 0 else WHITE
-        fps_text = font_mode.render("1. FPS Tests", True, fps_color)
-        fps_box_color = CYAN if highlight == 0 else (100, 100, 100)
-        fps_box_width = 5 if highlight == 0 else 1
-        pygame.draw.rect(screen, fps_box_color, (50, 250, 400, 180), fps_box_width)
-        if highlight == 0:
-            pygame.draw.rect(screen, CYAN, (50, 250, 400, 180), 5)
-        screen.blit(fps_text, (80, 270))
+        menu2 = font_menu.render("2 - System Tests", True, MAGENTA)
+        screen.blit(menu2, (WINDOW_WIDTH // 2 - menu2.get_width() // 2, y))
+        y += 100
         
-        fps_desc = font_desc.render("Interactive game modes", True, WHITE)
-        screen.blit(fps_desc, (80, 330))
+        menu3 = font_menu.render("3 - Results", True, YELLOW)
+        screen.blit(menu3, (WINDOW_WIDTH // 2 - menu3.get_width() // 2, y))
         
-        # System Tests
+        # Footer
+        footer = font_small.render("Press ESC to exit", True, WHITE)
+        screen.blit(footer, (WINDOW_WIDTH // 2 - footer.get_width() // 2, WINDOW_HEIGHT - 60))
+        
+        pygame.display.flip()
+        clock.tick(60)
+
+
+def show_recent_results():
+    """Show recent test results"""
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("FPS Tester - Recent Results")
+    clock = pygame.time.Clock()
+    font_title = pygame.font.Font(None, 60)
+    font_text = pygame.font.Font(None, 36)
+    font_small = pygame.font.Font(None, 28)
+    
+    recent = LOGGER.get_recent(10)
+    
+    viewing = True
+    while viewing:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+        
+        screen.fill(BLACK)
+        
+        # Title
+        title = font_title.render("Recent Results", True, GREEN)
+        screen.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 30))
+        
+        if not recent:
+            no_data = font_text.render("No results yet", True, YELLOW)
+            screen.blit(no_data, (WINDOW_WIDTH // 2 - no_data.get_width() // 2, 200))
+        else:
+            y = 120
+            for result in reversed(recent):
+                text = f"{result['test']} - {result['avg_fps']} FPS ({result['timestamp']})"
+                line = font_small.render(text, True, WHITE)
+                screen.blit(line, (50, y))
+                y += 50
+        
+        # Footer
+        footer = font_small.render("Press ESC to go back", True, WHITE)
+        screen.blit(footer, (WINDOW_WIDTH // 2 - footer.get_width() // 2, WINDOW_HEIGHT - 60))
+        
+        pygame.display.flip()
+        clock.tick(60)
         sys_color = MAGENTA if highlight == 1 else WHITE
         sys_text = font_mode.render("2. System Tests", True, sys_color)
         sys_box_color = MAGENTA if highlight == 1 else (100, 100, 100)
@@ -2421,6 +2482,8 @@ def show_results(game_mode):
         all_recommendations = recommendations
     else:
         avg_fps, min_fps, max_fps = game_mode.get_stats()
+        # Log the result
+        LOGGER.save_test(game_mode.name, avg_fps, min_fps, max_fps)
         status, status_color, fps_recommendations = get_performance_recommendations(avg_fps, min_fps, max_fps)
         
         # Get system metrics for analysis (default values if not available)
