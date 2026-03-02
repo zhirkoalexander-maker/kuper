@@ -1,11 +1,5 @@
-"""
-╔════════════════════════════════════════════════════════════════════════════╗
-║                         FPS TESTER v2.0                                   ║
-║                 Performance Analysis & Stress Testing Tool                 ║
-║                                                                            ║
-║  A professional desktop application for testing GPU/CPU performance       ║
-║  with real-time metrics, system monitoring, and crash protection.         ║
-╚════════════════════════════════════════════════════════════════════════════╝
+"""FPS Tester - performance testing tool for gaming
+Made to mess around with different rendering effects and see how fast your PC is
 """
 
 import pygame
@@ -35,14 +29,13 @@ pygame.init()
 # ═══════════════════════════════════════════════════════════════════════════
 
 class ResultsLogger:
-    """Log all test results to a file"""
-    
+    # Save/load test results
     def __init__(self):
         self.log_file = "test_results.json"
         self.results = self.load_results()
     
     def load_results(self):
-        """Load existing results from file"""
+        # Load from JSON
         if os.path.exists(self.log_file):
             try:
                 with open(self.log_file, 'r') as f:
@@ -52,7 +45,7 @@ class ResultsLogger:
         return []
     
     def save_test(self, test_name, avg_fps, min_fps, max_fps):
-        """Save a test result"""
+        # Store result
         result = {
             "test": test_name,
             "avg_fps": round(avg_fps, 2),
@@ -64,7 +57,7 @@ class ResultsLogger:
         self._write_file()
     
     def _write_file(self):
-        """Write results to file"""
+        # Write to disk
         try:
             with open(self.log_file, 'w') as f:
                 json.dump(self.results, f, indent=2)
@@ -96,7 +89,6 @@ LOGGER = ResultsLogger()
 # ═══════════════════════════════════════════════════════════════════════════
 
 class ScreenConfig:
-    """Display and window configuration"""
     WIDTH = 1400
     HEIGHT = 900
     FPS_CAP = 300
@@ -104,7 +96,7 @@ class ScreenConfig:
 
 
 class ColorScheme:
-    """Color palette for the application"""
+    # All the colors
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
     GREEN = (0, 255, 0)
@@ -120,7 +112,7 @@ class ColorScheme:
 
 
 class ApplicationSettings:
-    """Global application settings"""
+    # Store user preferences
     defaults = {
         "show_fps_rounded": True,
         "show_fps_real": True,
@@ -169,11 +161,10 @@ LIGHT_GRAY = ColorScheme.LIGHT_GRAY
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# UTILITY CLASSES & HELPERS
+# UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════
 
 class PerformanceMonitor:
-    """Real-time performance monitoring with history tracking"""
     
     def __init__(self, history_size: int = 300):
         self.history = deque(maxlen=history_size)
@@ -213,7 +204,7 @@ class PerformanceMonitor:
 
 
 class FrameRateLimiter:
-    """Smooth frame rate limiting with adaptive timing"""
+    # Simple frame timing
     
     def __init__(self, target_fps: int):
         self.target_fps = target_fps
@@ -241,14 +232,11 @@ class FrameRateLimiter:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# BASE GAME MODE FRAMEWORK
+# GAME MODES
 # ═══════════════════════════════════════════════════════════════════════════
 
 class GameMode(ABC):
-    """
-    Abstract base class for all game modes.
-    Defines the interface for stress testing applications.
-    """
+    # Base class for all tests
     
     def __init__(self, name: str, difficulty: int):
         self.name = name
@@ -309,12 +297,12 @@ class GameMode(ABC):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# GAME MODES - GPU STRESS TESTS
+# GPU STRESS TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 class Particle:
-    """Represents a single particle in the simulation"""
+    # Simple particle with physics
     
     __slots__ = ['x', 'y', 'vx', 'vy', 'color', 'size', 'life', 'max_life']
     
@@ -348,7 +336,7 @@ class Particle:
 
 
 class ParticleSystem:
-    """Manages a collection of particles with efficient batch operations"""
+    # Manage lots of particles efficiently
     
     def __init__(self, max_particles: int = 10000):
         self.particles: List[Particle] = []
@@ -421,11 +409,7 @@ class ParticleSystem:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class ParticleStorm(GameMode):
-    """
-    Particle Storm - Screen fills with thousands of particles.
-    Tests GPU fill rate and particle rendering performance.
-    Click to trigger particle explosions.
-    """
+    # Lots of particles to test GPU fill rate
     
     def __init__(self):
         super().__init__("Particle Storm", 4)
@@ -1544,14 +1528,10 @@ class ParticleAttractor(GameMode):
         screen.blit(text, (50, 30))
 
 # ═══════════════════════════════════════════════════════════════════════════
-# UI LAYER - MENUS AND INTERFACES
+# UI & MENUS
 # ═══════════════════════════════════════════════════════════════════════════
 
-
-# ─── Main Menu ───────────────────────────────────────────────────────────
-
 def show_main_menu():
-    """Simple main menu"""
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("FPS Tester")
     clock = pygame.time.Clock()
@@ -1604,7 +1584,7 @@ def show_main_menu():
 
 
 def show_recent_results():
-    """Show recent test results"""
+    # Show past results
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("FPS Tester - Recent Results")
     clock = pygame.time.Clock()
@@ -1684,10 +1664,7 @@ def show_recent_results():
 # ─── FPS Tests Menu ──────────────────────────────────────────────────────
 
 def show_fps_menu():
-    """
-    Menu to select FPS mode.
-    Displays all available GPU/CPU stress tests with descriptions.
-    """
+    # Select GPU test
     modes = [
         ("1", "Particle Storm", "Particles and explosions"),
         ("2", "Polygon Rush", "Rotating polygons"),
@@ -1757,10 +1734,7 @@ def show_fps_menu():
 # ─── System Tests Menu ───────────────────────────────────────────────────
 
 def show_system_menu():
-    """
-    Menu to select System tests.
-    CPU, RAM, and Disk benchmarking options.
-    """
+    # Select system test
     modes = [
         ("A", "CPU Test", "Processor test"),
         ("S", "RAM Test", "Memory test"),
@@ -1815,7 +1789,7 @@ def show_system_menu():
 # ==========================
 
 def show_welcome_screen():
-    """Welcome screen with information"""
+    # Opening screen
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("FPS Tester - Welcome")
     clock = pygame.time.Clock()
@@ -1893,7 +1867,7 @@ def show_welcome_screen():
         clock.tick(60)
 
 def show_settings_menu():
-    """Menu for configuring display settings"""
+    # Settings
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("FPS Tester - Settings")
     clock = pygame.time.Clock()
@@ -1970,7 +1944,7 @@ def show_settings_menu():
 # ==========================
 
 def show_menu():
-    """Menu to select mode"""
+    # Show all tests
     modes = [
         ("1", "Geometry Dash", "Jump over obstacles"),
         ("2", "Particle Storm", "Particles fill screen"),
@@ -2042,11 +2016,11 @@ def show_menu():
         clock.tick(60)
 
 # ==========================
-# RECOMMENDATION SYSTEM
+# ANALYSIS & RECOMMENDATIONS
 # ==========================
 
 def get_playable_games(avg_fps):
-    """Get list of games that can be played at this FPS"""
+    # Recommend games based on FPS
     games = {
         "Ultra": {
             "threshold": 120,
@@ -2120,7 +2094,7 @@ def get_playable_games(avg_fps):
 
 
 def get_performance_recommendations(avg_fps, min_fps, max_fps):
-    """Generates recommendations based on FPS"""
+    # Generate FPS-based recommendations
     recommendations = []
     
     # Check performance level
@@ -2173,7 +2147,7 @@ def get_performance_recommendations(avg_fps, min_fps, max_fps):
 
 
 def get_system_recommendations(game_mode):
-    """Generate recommendations based on system test data"""
+    # Analyze system test results
     recommendations = []
     
     # Analyze based on test type
@@ -2292,7 +2266,7 @@ def get_system_recommendations(game_mode):
 
 
 def calculate_performance_score(avg_fps, cpu_usage, ram_usage):
-    """Calculate overall performance score (1-10)"""
+    # Score from 1-10
     score = 10
     
     # Deduct points based on FPS
@@ -2319,7 +2293,7 @@ def calculate_performance_score(avg_fps, cpu_usage, ram_usage):
 
 
 def detect_bottleneck(avg_fps, cpu_usage, ram_usage):
-    """Detect which component is the bottleneck"""
+    # Find performance bottleneck
     bottleneck = None
     severity = "None"
     
@@ -2348,7 +2322,7 @@ def detect_bottleneck(avg_fps, cpu_usage, ram_usage):
 
 
 def get_game_recommendations(avg_fps, cpu_usage, ram_usage):
-    """Recommend what games can be played based on stress test results"""
+    # What games can you play
     recommendations = []
     
     recommendations.append("🎮 GAMES YOU CAN PLAY:")
@@ -2370,7 +2344,7 @@ def get_game_recommendations(avg_fps, cpu_usage, ram_usage):
 
 
 def get_upgrade_recommendations(avg_fps, cpu_usage, ram_usage, bottleneck):
-    """Suggest specific hardware upgrades based on bottleneck analysis"""
+    # Hardware upgrade suggestions
     recommendations = []
     
     recommendations.append("")
@@ -2412,7 +2386,7 @@ def get_upgrade_recommendations(avg_fps, cpu_usage, ram_usage, bottleneck):
 
 
 def show_slow_pc_message(game_mode):
-    """Show message when computer is too slow"""
+    # Show warning if too slow
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("FPS Tester - System Message")
     clock = pygame.time.Clock()
