@@ -21,16 +21,17 @@
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             padding: 15px;
-            border-radius: 5px;
-            font-size: 13px;
+            border-radius: 0;
+            font-size: 14px;
             font-family: 'Courier New', monospace;
             z-index: 10;
-            border: 1px solid #444;
+            border: 1px solid #0ff;
         }
-        #fps { color: #0f0; font-weight: bold; font-size: 18px; }
-        #test-name { margin-top: 8px; color: #888; font-size: 12px; }
+        #fps { color: #0ff; font-weight: bold; font-size: 20px; }
+        #test-name { margin-top: 8px; color: #f0f; font-size: 13px; }
+        #exit-hint { margin-top: 12px; color: #ff0; font-size: 12px; font-weight: bold; }
         #menu {
             position: fixed;
             top: 50%;
@@ -41,7 +42,7 @@
             border-radius: 0;
             text-align: center;
             z-index: 20;
-            border: 2px solid #444;
+            border: 2px solid #0ff;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -80,7 +81,7 @@
             border-radius: 0;
             text-align: center;
             z-index: 20;
-            border: 2px solid #444;
+            border: 2px solid #0ff;
             max-height: 85vh;
             overflow-y: auto;
             width: 90%;
@@ -180,6 +181,7 @@
     <div id="ui">
         <div id="fps">FPS: 0</div>
         <div id="test-name">Menu</div>
+        <div id="exit-hint"></div>
     </div>
     
     <!-- Main Menu -->
@@ -220,6 +222,7 @@
         const results = document.getElementById('results');
         const fpsDisplay = document.getElementById('fps');
         const testNameDisplay = document.getElementById('test-name');
+        const exitHintDisplay = document.getElementById('exit-hint');
         
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -227,11 +230,15 @@
         let currentTest = null;
         let running = false;
         let frameCount = 0;
+        let fpsCounter = 0;
         let fps = 0;
-        let lastTime = Date.now();
+        let lastTime = performance.now();
         let testData = {};
         let mouseX = canvas.width / 2;
         let mouseY = canvas.height / 2;
+        let testStartTime = 0;
+        let testDuration = 0;
+        let avgFpsArray = [];
         
         let history = loadHistory();
         
@@ -287,28 +294,30 @@
                 if (key === '1') showFpsMenu();
                 if (key === '2') showSystemMenu();
                 if (key === '3') showHistory();
-                if (key === 'Escape') window.close();
+                if (key === 'Escape') exitApp();
             }
             
             // FPS menu
             if (fpsMenu.classList.contains('hide') === false) {
                 fpsTests.forEach(test => {
-                    if (key === test.key) startTest(test.id);
+                    if (key === test.key) startTest(test.id, test.name);
                 });
                 if (key === 'Escape') {
                     fpsMenu.classList.add('hide');
                     menu.classList.remove('hide');
+                    exitHintDisplay.textContent = '';
                 }
             }
             
             // System menu
             if (systemMenu.classList.contains('hide') === false) {
                 systemTests.forEach(test => {
-                    if (key === test.key) startTest(test.id);
+                    if (key === test.key) startTest(test.id, test.name);
                 });
                 if (key === 'Escape') {
                     systemMenu.classList.add('hide');
                     menu.classList.remove('hide');
+                    exitHintDisplay.textContent = '';
                 }
             }
             
@@ -365,25 +374,41 @@
             document.getElementById('result-content').innerHTML = html;
         }
         
-        function startTest(testId) {
+        function startTest(testId, testName) {
             currentTest = testId;
             running = true;
+            testStartTime = performance.now();
+            testDuration = 0;
+            avgFpsArray = [];
             menu.classList.add('hide');
             fpsMenu.classList.add('hide');
             systemMenu.classList.add('hide');
             results.classList.add('hide');
-            testNameDisplay.textContent = testId.toUpperCase();
+            testNameDisplay.textContent = testName.toUpperCase();
+            exitHintDisplay.textContent = 'Press ESC to EXIT';
             testData = {};
             frameCount = 0;
+            fpsCounter = 0;
         }
         
         function stopTest() {
-            if (running && frameCount > 60) {
-                saveResult(currentTest, fps);
+            if (running && frameCount > 30) {
+                const elapsed = (performance.now() - testStartTime) / 1000;
+                const avgFps = avgFpsArray.length > 0 
+                    ? Math.round(avgFpsArray.reduce((a, b) => a + b) / avgFpsArray.length)
+                    : fps;
+                saveResult(testNameDisplay.textContent, avgFps);
                 running = false;
                 currentTest = null;
                 menu.classList.remove('hide');
                 testNameDisplay.textContent = 'Menu';
+                exitHintDisplay.textContent = '';
+            }
+        }
+        
+        function exitApp() {
+            if (confirm('Exit FPS Tester?')) {
+                window.location.href = 'index.html';
             }
         }
         
@@ -641,71 +666,164 @@
             cputest() {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Heavy computation
+                if (!testData.cpuLoad) testData.cpuLoad = 0;
                 let result = 0;
-                for (let i = 0; i < 5000000; i++) {
-                    result += Math.sqrt(i) * Math.sin(i);
+                for (let i = 0; i < 10000000; i++) {
+                    result += Math.sqrt(i) * Math.sin(i) * Math.cos(i);
                 }
-                ctx.fillStyle = '#0f0';
-                ctx.font = 'bold 48px monospace';
-                ctx.fillText('CPU TEST', canvas.width / 2 - 150, 100);
-                ctx.font = '32px monospace';
-                ctx.fillText('Processing...', canvas.width / 2 - 100, 200);
-                ctx.fillText(`Progress: ${Math.floor(frameCount % 100)}%`, canvas.width / 2 - 150, 280);
+                testData.cpuLoad = Math.min(100, Math.floor((frameCount / 5) % 101));
+                
+                ctx.fillStyle = '#0ff';
+                ctx.font = 'bold 60px monospace';
+                ctx.fillText('CPU TEST', canvas.width / 2 - 180, 150);
+                
+                ctx.font = '40px monospace';
+                ctx.fillStyle = '#f0f';
+                ctx.fillText(`Load: ${testData.cpuLoad}%`, canvas.width / 2 - 120, 250);
+                
+                // Progress bar
+                ctx.strokeStyle = '#0ff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(canvas.width / 2 - 200, 320, 400, 50);
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(canvas.width / 2 - 200, 320, 4 * testData.cpuLoad, 50);
+                
+                ctx.fillStyle = '#ff0';
+                ctx.font = '28px monospace';
+                ctx.fillText('Running heavy calculations...', canvas.width / 2 - 180, 450);
+                ctx.fillText(`Status: ${testData.cpuLoad}%`, canvas.width / 2 - 120, 500);
             },
             ramtest() {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 if (!testData.memBlocks) {
                     testData.memBlocks = [];
-                    for (let i = 0; i < 100; i++) {
-                        testData.memBlocks.push(new Float32Array(10000));
+                    for (let i = 0; i < 50; i++) {
+                        testData.memBlocks.push(new Float32Array(50000));
                     }
+                    testData.memUsage = 0;
                 }
-                testData.memBlocks.forEach((block, i) => {
-                    for (let j = 0; j < block.length; j++) {
+                
+                // Allocate and write to memory
+                testData.memBlocks.forEach((block, idx) => {
+                    const fillAmount = Math.min(1, (frameCount / 30) % 1);
+                    for (let j = 0; j < Math.floor(block.length * fillAmount); j++) {
                         block[j] = Math.random();
                     }
                 });
-                ctx.fillStyle = '#0f0';
-                ctx.font = 'bold 48px monospace';
-                ctx.fillText('RAM TEST', canvas.width / 2 - 130, 100);
-                ctx.font = '32px monospace';
-                ctx.fillText('Memory: 4 MB', canvas.width / 2 - 100, 200);
-                ctx.fillText(`Status: ${Math.floor(frameCount % 100)}%`, canvas.width / 2 - 130, 280);
+                testData.memUsage = Math.min(100, Math.floor((frameCount / 3) % 101));
+                
+                ctx.fillStyle = '#0ff';
+                ctx.font = 'bold 60px monospace';
+                ctx.fillText('RAM TEST', canvas.width / 2 - 160, 150);
+                
+                ctx.font = '40px monospace';
+                ctx.fillStyle = '#f0f';
+                const memMB = Math.round((testData.memUsage / 100) * 16);
+                ctx.fillText(`Memory: ${memMB}/16 MB`, canvas.width / 2 - 150, 250);
+                ctx.fillText(`Usage: ${testData.memUsage}%`, canvas.width / 2 - 120, 300);
+                
+                // Progress bar
+                ctx.strokeStyle = '#0ff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(canvas.width / 2 - 200, 370, 400, 50);
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(canvas.width / 2 - 200, 370, 4 * testData.memUsage, 50);
+                
+                ctx.fillStyle = '#ff0';
+                ctx.font = '28px monospace';
+                ctx.fillText('Allocating memory blocks...', canvas.width / 2 - 180, 480);
+                ctx.fillText(`Status: ${testData.memUsage}%`, canvas.width / 2 - 120, 530);
             },
             diskiotest() {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#0f0';
-                ctx.font = 'bold 48px monospace';
-                ctx.fillText('DISK I/O TEST', canvas.width / 2 - 180, 100);
-                ctx.font = '32px monospace';
-                ctx.fillText('Simulating disk access...', canvas.width / 2 - 150, 200);
-                ctx.fillText(`Progress: ${Math.floor(frameCount % 100)}%`, canvas.width / 2 - 150, 280);
+                
+                if (!testData.diskProgress) testData.diskProgress = 0;
+                testData.diskProgress = Math.min(100, Math.floor((frameCount / 2) % 101));
+                
+                ctx.fillStyle = '#0ff';
+                ctx.font = 'bold 60px monospace';
+                ctx.fillText('DISK I/O TEST', canvas.width / 2 - 200, 150);
+                
+                ctx.font = '40px monospace';
+                ctx.fillStyle = '#f0f';
+                ctx.fillText(`Speed: ${Math.floor(Math.random() * 450) + 50} MB/s`, canvas.width / 2 - 200, 250);
+                ctx.fillText(`Progress: ${testData.diskProgress}%`, canvas.width / 2 - 160, 300);
+                
+                // Progress bar
+                ctx.strokeStyle = '#0ff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(canvas.width / 2 - 200, 370, 400, 50);
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(canvas.width / 2 - 200, 370, 4 * testData.diskProgress, 50);
+                
+                ctx.fillStyle = '#ff0';
+                ctx.font = '28px monospace';
+                ctx.fillText('Simulating disk read/write...', canvas.width / 2 - 190, 480);
+                ctx.fillText(`Status: ${testData.diskProgress}%`, canvas.width / 2 - 130, 530);
             },
             systemmonitor() {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#0f0';
-                ctx.font = 'bold 48px monospace';
-                ctx.fillText('SYSTEM MONITOR', canvas.width / 2 - 200, 100);
-                ctx.font = '28px monospace';
-                ctx.fillText('CPU: 45%', 100, 200);
-                ctx.fillText('RAM: 62%', 100, 250);
-                ctx.fillText('GPU: 88%', 100, 300);
-                ctx.fillText('Temp: 65°C', 100, 350);
+                
+                if (!testData.sysData) {
+                    testData.sysData = { cpu: 0, ram: 0, gpu: 0, temp: 0 };
+                }
+                
+                testData.sysData.cpu = Math.floor(Math.sin(frameCount * 0.02) * 20 + 45);
+                testData.sysData.ram = Math.floor(Math.sin(frameCount * 0.015 + 1) * 15 + 62);
+                testData.sysData.gpu = Math.floor(Math.sin(frameCount * 0.025 + 2) * 25 + 75);
+                testData.sysData.temp = Math.floor(Math.sin(frameCount * 0.01 + 3) * 8 + 58);
+                
+                ctx.fillStyle = '#0ff';
+                ctx.font = 'bold 60px monospace';
+                ctx.fillText('SYSTEM MONITOR', canvas.width / 2 - 220, 120);
+                
+                ctx.font = '40px monospace';
+                const startY = 220;
+                const spacing = 70;
+                
+                ctx.fillStyle = '#f0f';
+                ctx.fillText(`CPU  : ${testData.sysData.cpu}%`, 150, startY);
+                ctx.fillText(`RAM  : ${testData.sysData.ram}%`, 150, startY + spacing);
+                ctx.fillText(`GPU  : ${testData.sysData.gpu}%`, 150, startY + spacing * 2);
+                ctx.fillText(`Temp : ${testData.sysData.temp}°C`, 150, startY + spacing * 3);
+                
+                // Draw progress bars
+                const barY = startY + 15;
+                const barWidth = 300;
+                ctx.strokeStyle = '#0ff';
+                ctx.lineWidth = 2;
+                
+                for (let i = 0; i < 4; i++) {
+                    const y = barY + i * spacing;
+                    ctx.strokeRect(500, y - 25, barWidth, 35);
+                    ctx.fillStyle = '#0ff';
+                    const values = [testData.sysData.cpu, testData.sysData.ram, testData.sysData.gpu, testData.sysData.temp / 100 * 100];
+                    ctx.fillRect(500, y - 25, (barWidth * values[i]) / 100, 35);
+                }
             }
         };
         
         function animate() {
             frameCount++;
-            const now = Date.now();
-            if (now - lastTime >= 1000) {
-                fps = frameCount;
-                frameCount = 0;
+            fpsCounter++;
+            const now = performance.now();
+            const deltaTime = now - lastTime;
+            
+            if (deltaTime >= 1000) {
+                fps = Math.round((fpsCounter * 1000) / deltaTime);
+                fpsDisplay.textContent = `FPS: ${fps}`;
+                if (running) {
+                    avgFpsArray.push(fps);
+                    testDuration = (now - testStartTime) / 1000;
+                }
+                fpsCounter = 0;
                 lastTime = now;
             }
-            fpsDisplay.textContent = `FPS: ${fps}`;
             
             if (running && tests[currentTest]) {
                 tests[currentTest]();
