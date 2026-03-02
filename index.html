@@ -1,109 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>FPS Tester</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: system-ui, sans-serif;
-            background: #fff;
-            color: #000;
-        }
-        header {
-            padding: 40px 20px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-        header h1 { font-size: 2em; margin-bottom: 5px; }
-        header p { color: #666; }
-        .container { max-width: 700px; margin: 0 auto; padding: 40px 20px; }
-        section { margin-bottom: 50px; }
-        h2 { font-size: 1.4em; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd; }
-        p { line-height: 1.6; color: #444; margin-bottom: 15px; }
-        .big-btn {
-            display: block;
-            background: #000;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 30px 0;
-        }
-        .big-btn:hover { background: #222; }
-        .tests {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .test-box {
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 13px;
-        }
-        footer { padding: 30px 20px; text-align: center; border-top: 1px solid #ddd; color: #888; font-size: 13px; }
+        html, body { width: 100%; height: 100%; }
+        body { background: #000; font-family: system-ui; color: #fff; display: flex; align-items: center; justify-content: center; }
+        .container { text-align: center; }
+        h1 { font-size: 48px; margin-bottom: 20px; color: #0f0; }
+        p { font-size: 18px; color: #666; margin-bottom: 30px; }
+        a { display: inline-block; background: #0f0; color: #000; padding: 15px 40px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px; cursor: pointer; }
+        a:hover { background: #0a0; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>FPS Tester</h1>
-        <p>Performance testing in your browser</p>
-    </header>
-    
     <div class="container">
-        <section>
-            <p>
-                Run real-time stress tests on your GPU and CPU. See how many frames per second your hardware can handle.
-            </p>
-            
-            <a href="browser-tester.html" class="big-btn">Launch Tests →</a>
-        </section>
-        
-        <section>
-            <h2>13 GPU Tests</h2>
-            <div class="tests">
-                <div class="test-box">Particle Storm</div>
-                <div class="test-box">Polygon Rush</div>
-                <div class="test-box">Matrix Rain</div>
-                <div class="test-box">Fractal Tree</div>
-                <div class="test-box">Gravity Fields</div>
-                <div class="test-box">Bouncing Balls</div>
-                <div class="test-box">Plasma</div>
-                <div class="test-box">Mandelbrot</div>
-                <div class="test-box">Tunnel</div>
-                <div class="test-box">Starfield</div>
-                <div class="test-box">Interactive Draw</div>
-                <div class="test-box">Noise Field</div>
-                <div class="test-box">Particle Attractor</div>
-            </div>
-        </section>
-        
-        <section>
-            <h2>4 System Tests</h2>
-            <div class="tests">
-                <div class="test-box">CPU Load</div>
-                <div class="test-box">RAM Test</div>
-                <div class="test-box">Disk I/O</div>
-                <div class="test-box">Monitor</div>
-            </div>
-        </section>
-        
-        <section>
-            <h2>How it works</h2>
-            <p>
-                Click Launch to start testing. Each test measures FPS in real time. Press ESC to exit and return to menu. Your performance determines which games you can play.
-            </p>
-        </section>
+        <h1>FPS TESTER</h1>
+        <p>Test your computer's performance</p>
+        <a href="browser-tester.html">Start Testing</a>
+        <a href="https://github.com/zhirkoalexander-maker/kuper">GitHub</a>
     </div>
-    
-    <footer>
-        FPS Tester • Browser version
-    </footer>
 </body>
 </html>

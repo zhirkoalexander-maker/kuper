@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPS Tester - Browser</title>
+    <title>FPS Tester</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #1a1a1a;
+            font-family: system-ui, sans-serif;
+            background: #000;
             color: #fff;
             overflow: hidden;
         }
@@ -16,58 +16,93 @@
             display: block;
             width: 100vw;
             height: 100vh;
-            background: #000;
         }
         #ui {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.9);
             padding: 15px;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 13px;
             font-family: monospace;
             z-index: 10;
+            border: 1px solid #333;
         }
-        #fps { color: #0f0; font-weight: bold; }
-        #test-name { margin-top: 10px; color: #aaa; }
+        #fps { color: #0f0; font-weight: bold; font-size: 20px; }
+        #test-name { margin-top: 8px; color: #666; font-size: 12px; }
         #menu {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            padding: 30px;
+            background: rgba(0,0,0,0.95);
+            padding: 40px;
             border-radius: 10px;
             text-align: center;
             z-index: 20;
-            border: 2px solid #0f0;
+            border: 1px solid #0f0;
+            max-height: 85vh;
+            overflow-y: auto;
         }
-        #menu h1 { margin-bottom: 20px; }
-        #menu .category { margin: 15px 0; }
+        #menu h1 { font-size: 32px; margin-bottom: 10px; color: #0f0; }
+        #menu p { color: #666; font-size: 12px; margin-bottom: 30px; }
+        .btn-group { margin: 20px 0; }
+        .btn-group-title { color: #0f0; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
         #menu button {
             background: #0f0;
             color: #000;
             border: none;
-            padding: 8px 15px;
+            padding: 10px 14px;
             margin: 5px;
             border-radius: 3px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
+            min-width: 120px;
         }
         #menu button:hover { background: #0a0; }
-        #menu button.active { background: #ff0; color: #000; }
         .hide { display: none !important; }
-        #info {
+        #results {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.98);
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 20;
+            border: 1px solid #0f0;
+            max-height: 85vh;
+            overflow-y: auto;
+            max-width: 500px;
+        }
+        #results h1 { color: #0f0; font-size: 24px; margin-bottom: 20px; }
+        #results .score { font-size: 28px; color: #0f0; font-weight: bold; margin: 20px 0; }
+        #results .games { margin: 30px 0; text-align: left; }
+        #results .game-tier { margin: 20px 0; }
+        #results .game-tier h3 { color: #0f0; font-size: 14px; margin-bottom: 8px; }
+        #results .game-tier p { color: #666; font-size: 12px; margin: 4px 0; }
+        #results button { 
+            background: #0f0; 
+            color: #000; 
+            border: none; 
+            padding: 12px 30px; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 20px; 
+        }
+        #results button:hover { background: #0a0; }
+        .history-item {
+            background: #111;
             padding: 10px;
-            border-radius: 5px;
+            margin: 8px 0;
+            border-left: 3px solid #0f0;
+            text-align: left;
             font-size: 12px;
-            color: #aaa;
+            color: #999;
         }
     </style>
 </head>
@@ -80,36 +115,41 @@
     </div>
     
     <div id="menu">
-        <h1>FPS Tester</h1>
+        <h1>FPS TESTER</h1>
+        <p>Test your computer's performance</p>
         
-        <div class="category">
-            <div style="margin-bottom: 10px; color: #aaa;">GPU Tests</div>
-            <button onclick="startTest('particles')">Particles</button>
-            <button onclick="startTest('polygons')">Polygons</button>
-            <button onclick="startTest('matrix')">Matrix Rain</button>
-            <button onclick="startTest('fractal')">Fractal</button>
-            <button onclick="startTest('bouncing')">Bouncing</button>
-            <button onclick="startTest('plasma')">Plasma</button>
+        <div class="btn-group">
+            <div class="btn-group-title">1 - FPS TESTS</div>
+            <button onclick="showFpsMenu()">Select Test</button>
         </div>
         
-        <div class="category">
-            <div style="margin-bottom: 10px; color: #aaa;">System Tests</div>
-            <button onclick="startTest('cpu')">CPU Test</button>
+        <div class="btn-group">
+            <div class="btn-group-title">2 - SYSTEM TESTS</div>
+            <button onclick="startTest('cpu')">CPU</button>
+            <button onclick="startTest('ram')">RAM</button>
         </div>
         
-        <div style="margin-top: 20px; color: #666; font-size: 11px;">
-            Press ESC to return to menu
+        <div class="btn-group">
+            <div class="btn-group-title">3 - RESULTS</div>
+            <button onclick="showHistory()">View History</button>
+        </div>
+        
+        <div class="btn-group">
+            <div class="btn-group-title">BENCHMARK</div>
+            <button onclick="runAllTests()" style="min-width: 240px;">Run All Tests</button>
         </div>
     </div>
     
-    <div id="info">
-        Press buttons to start tests • ESC to exit
+    <div id="results" class="hide">
+        <h1>RESULTS</h1>
+        <div id="result-content"></div>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const menu = document.getElementById('menu');
+        const results = document.getElementById('results');
         const fpsDisplay = document.getElementById('fps');
         const testNameDisplay = document.getElementById('test-name');
         
@@ -122,6 +162,29 @@
         let fps = 0;
         let lastTime = Date.now();
         let testData = {};
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        let testResults = {};
+        let allTestMode = false;
+        let allTestList = ['particles', 'polygons', 'matrix', 'fractal', 'gravity', 'bouncing', 'plasma', 'mandelbrot', 'tunnel', 'starfield', 'draw', 'noisefield', 'attractor'];
+        let currentTestIndex = 0;
+        
+        let history = loadHistory();
+        
+        function loadHistory() {
+            const saved = localStorage.getItem('fps_tester_history');
+            return saved ? JSON.parse(saved) : [];
+        }
+        
+        function saveResult(testName, avgFps) {
+            const result = {
+                test: testName,
+                fps: Math.round(avgFps),
+                date: new Date().toLocaleString()
+            };
+            history.push(result);
+            localStorage.setItem('fps_tester_history', JSON.stringify(history));
+        }
         
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
@@ -129,79 +192,186 @@
         });
         
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                stopTest();
-            }
+            if (e.key === 'Escape') stopTest();
+            if (e.key === '1') showFpsMenu();
+            if (e.key === '2') { menu.classList.add('hide'); results.classList.add('hide'); showSystemMenu(); }
+            if (e.key === '3') showHistory();
         });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        function showFpsMenu() {
+            const tests = [
+                { key: '1', name: 'Particles', id: 'particles' },
+                { key: '2', name: 'Polygons', id: 'polygons' },
+                { key: '3', name: 'Matrix', id: 'matrix' },
+                { key: '4', name: 'Fractal', id: 'fractal' },
+                { key: '5', name: 'Gravity', id: 'gravity' },
+                { key: '6', name: 'Bouncing', id: 'bouncing' },
+                { key: '7', name: 'Plasma', id: 'plasma' },
+                { key: '8', name: 'Mandelbrot', id: 'mandelbrot' },
+                { key: '9', name: 'Tunnel', id: 'tunnel' },
+                { key: '0', name: 'Starfield', id: 'starfield' },
+                { key: 'Q', name: 'Draw', id: 'draw' },
+                { key: 'W', name: 'Noise', id: 'noisefield' },
+                { key: 'E', name: 'Attractor', id: 'attractor' }
+            ];
+            
+            menu.classList.remove('hide');
+            menu.innerHTML = '<h1>FPS TESTS</h1><p>Pick a test</p>';
+            tests.forEach(test => {
+                const btn = document.createElement('button');
+                btn.textContent = test.key + ' - ' + test.name;
+                btn.onclick = () => startTest(test.id);
+                menu.appendChild(btn);
+            });
+            const back = document.createElement('button');
+            back.textContent = 'ESC - Back';
+            back.onclick = () => { menu.innerHTML = ''; menu.classList.add('hide'); };
+            menu.appendChild(back);
+        }
+        
+        function showSystemMenu() {
+            menu.classList.remove('hide');
+            menu.innerHTML = '<h1>SYSTEM TESTS</h1><p>Pick a test</p>';
+            const tests = [
+                { name: 'CPU Load', id: 'cpu' },
+                { name: 'RAM Usage', id: 'ram' }
+            ];
+            tests.forEach(test => {
+                const btn = document.createElement('button');
+                btn.textContent = test.name;
+                btn.onclick = () => startTest(test.id);
+                menu.appendChild(btn);
+            });
+        }
+        
+        function showHistory() {
+            results.classList.remove('hide');
+            menu.classList.add('hide');
+            let html = '<h1>HISTORY</h1>';
+            if (history.length === 0) {
+                html += '<p style="color: #666;">No results yet</p>';
+            } else {
+                history.slice(-10).reverse().forEach(r => {
+                    html += `<div class="history-item">${r.test} - ${r.fps} FPS - ${r.date}</div>`;
+                });
+            }
+            html += '<button onclick="backToMenu()">← Back</button>';
+            document.getElementById('result-content').innerHTML = html;
+        }
         
         function startTest(test) {
             currentTest = test;
             running = true;
             menu.classList.add('hide');
+            results.classList.add('hide');
             testNameDisplay.textContent = test.toUpperCase();
             testData = {};
             frameCount = 0;
         }
         
+        function runAllTests() {
+            allTestMode = true;
+            testResults = {};
+            currentTestIndex = 0;
+            startNextTest();
+        }
+        
+        function startNextTest() {
+            if (currentTestIndex < allTestList.length) {
+                startTest(allTestList[currentTestIndex]);
+            } else {
+                showResults();
+            }
+        }
+        
         function stopTest() {
+            if (allTestMode && frameCount > 60) {
+                testResults[currentTest] = fps;
+                saveResult(currentTest, fps);
+                currentTestIndex++;
+                setTimeout(startNextTest, 500);
+            } else {
+                running = false;
+                allTestMode = false;
+                currentTest = null;
+                menu.classList.remove('hide');
+                testNameDisplay.textContent = 'Menu';
+            }
+        }
+        
+        function showResults() {
             running = false;
-            currentTest = null;
+            allTestMode = false;
+            menu.classList.add('hide');
+            results.classList.remove('hide');
+            const fpsValues = Object.values(testResults);
+            const avgFps = Math.round(fpsValues.reduce((a, b) => a + b, 0) / fpsValues.length);
+            saveResult('Benchmark', avgFps);
+            
+            let html = `<div class="score">Average FPS: ${avgFps}</div>`;
+            html += `<p style="color: #666; font-size: 11px; margin-bottom: 20px;">Based on 13 tests</p>`;
+            html += '<div class="games">';
+            
+            if (avgFps >= 120) {
+                html += `<div class="game-tier"><h3>ULTRA (120+ FPS)</h3><p>Cyberpunk 2077, Red Dead 2, Flight Sim, Star Citizen, UE5</p></div>`;
+            } else if (avgFps >= 90) {
+                html += `<div class="game-tier"><h3>HIGH (90+ FPS)</h3><p>Baldur's Gate 3, Alan Wake 2, F1 24, Last of Us</p></div>`;
+            } else if (avgFps >= 60) {
+                html += `<div class="game-tier"><h3>MEDIUM (60+ FPS)</h3><p>Elden Ring, Starfield, Witcher 3, Valorant, CS2</p></div>`;
+            } else if (avgFps >= 45) {
+                html += `<div class="game-tier"><h3>LOW (45+ FPS)</h3><p>Fortnite, Minecraft, Dota 2, Apex, CoD</p></div>`;
+            } else if (avgFps >= 30) {
+                html += `<div class="game-tier"><h3>MINIMAL (30+ FPS)</h3><p>Indie, 2D, older games, browser games</p></div>`;
+            } else {
+                html += `<div class="game-tier"><h3>VERY LOW (&lt;30 FPS)</h3><p>Lightweight games only</p></div>`;
+            }
+            
+            html += '</div>';
+            html += '<button onclick="backToMenu()">← Back</button>';
+            document.getElementById('result-content').innerHTML = html;
+        }
+        
+        function backToMenu() {
+            results.classList.add('hide');
             menu.classList.remove('hide');
             testNameDisplay.textContent = 'Menu';
         }
         
-        // Test implementations
         const tests = {
             particles() {
                 if (!testData.particles) {
-                    testData.particles = Array(500).fill().map(() => ({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
-                        vx: (Math.random() - 0.5) * 8,
-                        vy: (Math.random() - 0.5) * 8,
-                        life: Math.random() * 255
-                    }));
+                    testData.particles = Array(800).fill().map(() => ({x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8, life: Math.random() * 255}));
                 }
-                
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
                 testData.particles.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.life -= 2;
-                    
-                    if (p.life < 0) {
-                        p.x = Math.random() * canvas.width;
-                        p.y = Math.random() * canvas.height;
-                        p.life = 255;
-                    }
-                    
-                    ctx.fillStyle = `rgba(0, 255, 0, ${p.life / 255})`;
-                    ctx.fillRect(p.x, p.y, 2, 2);
+                    p.x += p.vx; p.y += p.vy; p.life -= 2;
+                    if (p.life < 0) { p.x = Math.random() * canvas.width; p.y = Math.random() * canvas.height; p.life = 255; }
+                    ctx.fillStyle = `rgba(0, 255, 100, ${p.life / 255})`;
+                    ctx.fillRect(p.x, p.y, 3, 3);
                 });
             },
-            
             polygons() {
                 if (!testData.rotation) testData.rotation = 0;
-                
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                testData.rotation += 2;
-                
-                for (let i = 0; i < 20; i++) {
+                testData.rotation += 3;
+                for (let i = 0; i < 25; i++) {
                     ctx.save();
                     ctx.translate(canvas.width / 2, canvas.height / 2);
-                    ctx.rotate((testData.rotation + i * 18) * Math.PI / 180);
-                    ctx.strokeStyle = `hsl(${(testData.rotation + i * 18) % 360}, 100%, 50%)`;
+                    ctx.rotate((testData.rotation + i * 15) * Math.PI / 180);
+                    ctx.strokeStyle = `hsl(${(testData.rotation + i * 15) % 360}, 100%, 50%)`;
                     ctx.lineWidth = 2;
-                    
                     ctx.beginPath();
-                    for (let j = 0; j < 6; j++) {
-                        const angle = (j * 60) * Math.PI / 180;
-                        const x = Math.cos(angle) * (100 + i * 10);
-                        const y = Math.sin(angle) * (100 + i * 10);
+                    for (let j = 0; j < 8; j++) {
+                        const angle = (j * 45) * Math.PI / 180;
+                        const x = Math.cos(angle) * (100 + i * 12);
+                        const y = Math.sin(angle) * (100 + i * 12);
                         if (j === 0) ctx.moveTo(x, y);
                         else ctx.lineTo(x, y);
                     }
@@ -210,167 +380,257 @@
                     ctx.restore();
                 }
             },
-            
             matrix() {
                 if (!testData.matrix) {
                     testData.matrix = [];
-                    for (let i = 0; i < 50; i++) {
-                        testData.matrix.push({
-                            x: Math.random() * canvas.width,
-                            y: -20,
-                            speed: Math.random() * 3 + 2,
-                            chars: '01'.split('')
-                        });
+                    for (let i = 0; i < 80; i++) {
+                        testData.matrix.push({x: Math.random() * canvas.width, y: -20, speed: Math.random() * 4 + 2});
                     }
                 }
-                
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
                 ctx.fillStyle = '#0f0';
-                ctx.font = '16px monospace';
-                
+                ctx.font = 'bold 18px monospace';
                 testData.matrix.forEach(drop => {
                     drop.y += drop.speed;
-                    
-                    if (drop.y > canvas.height) {
-                        drop.y = -20;
-                        drop.x = Math.random() * canvas.width;
-                    }
-                    
-                    for (let i = 0; i < 10; i++) {
-                        ctx.fillText(
-                            drop.chars[Math.floor(Math.random() * 2)],
-                            drop.x,
-                            drop.y - i * 20
-                        );
+                    if (drop.y > canvas.height) { drop.y = -20; drop.x = Math.random() * canvas.width; }
+                    for (let i = 0; i < 15; i++) {
+                        ctx.fillText(Math.random() > 0.5 ? '0' : '1', drop.x, drop.y - i * 20);
                     }
                 });
             },
-            
             fractal() {
                 if (!testData.fractalLevel) testData.fractalLevel = 0;
-                
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                testData.fractalLevel = (testData.fractalLevel + 0.5) % 360;
-                
+                testData.fractalLevel = (testData.fractalLevel + 1) % 360;
                 ctx.strokeStyle = `hsl(${testData.fractalLevel}, 100%, 50%)`;
-                ctx.lineWidth = 1;
-                
+                ctx.lineWidth = 2;
                 const drawTree = (x, y, angle, depth) => {
                     if (depth === 0) return;
-                    
-                    const endX = x + Math.cos(angle) * depth * 5;
-                    const endY = y + Math.sin(angle) * depth * 5;
-                    
+                    const endX = x + Math.cos(angle) * depth * 6;
+                    const endY = y + Math.sin(angle) * depth * 6;
                     ctx.beginPath();
                     ctx.moveTo(x, y);
                     ctx.lineTo(endX, endY);
                     ctx.stroke();
-                    
-                    drawTree(endX, endY, angle - 0.5, depth - 1);
-                    drawTree(endX, endY, angle + 0.5, depth - 1);
+                    drawTree(endX, endY, angle - 0.4, depth - 1);
+                    drawTree(endX, endY, angle + 0.4, depth - 1);
                 };
-                
-                drawTree(canvas.width / 2, canvas.height, Math.PI / 2, 12);
+                drawTree(canvas.width / 2, canvas.height * 0.9, Math.PI / 2, 14);
             },
-            
-            bouncing() {
-                if (!testData.balls) {
-                    testData.balls = Array(30).fill().map(() => ({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
-                        vx: (Math.random() - 0.5) * 6,
-                        vy: (Math.random() - 0.5) * 6,
-                        r: Math.random() * 10 + 5,
-                        color: `hsl(${Math.random() * 360}, 100%, 50%)`
-                    }));
+            gravity() {
+                if (!testData.gravity) {
+                    testData.gravity = Array(300).fill().map(() => ({x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3}));
+                    testData.gravCenter = { x: canvas.width / 2, y: canvas.height / 2 };
                 }
-                
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
+                ctx.fillStyle = '#0f0';
+                testData.gravity.forEach(p => {
+                    const dx = testData.gravCenter.x - p.x;
+                    const dy = testData.gravCenter.y - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+                    p.vx += (dx / dist) * 0.15;
+                    p.vy += (dy / dist) * 0.15;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    ctx.fillRect(p.x, p.y, 2, 2);
+                });
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                ctx.beginPath();
+                ctx.arc(testData.gravCenter.x, testData.gravCenter.y, 50, 0, Math.PI * 2);
+                ctx.fill();
+            },
+            bouncing() {
+                if (!testData.balls) {
+                    testData.balls = Array(40).fill().map(() => ({x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - 0.5) * 7, vy: (Math.random() - 0.5) * 7, r: Math.random() * 12 + 6, color: `hsl(${Math.random() * 360}, 100%, 50%)`}));
+                }
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 testData.balls.forEach(ball => {
-                    ball.x += ball.vx;
-                    ball.y += ball.vy;
-                    
-                    if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) ball.vx *= -1;
-                    if (ball.y - ball.r < 0 || ball.y + ball.r > canvas.height) ball.vy *= -1;
-                    
+                    ball.x += ball.vx; ball.y += ball.vy;
+                    if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) ball.vx *= -0.98;
+                    if (ball.y - ball.r < 0 || ball.y + ball.r > canvas.height) ball.vy *= -0.98;
                     ball.x = Math.max(ball.r, Math.min(canvas.width - ball.r, ball.x));
                     ball.y = Math.max(ball.r, Math.min(canvas.height - ball.r, ball.y));
-                    
                     ctx.fillStyle = ball.color;
                     ctx.beginPath();
                     ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
                 });
             },
-            
             plasma() {
                 if (!testData.plasmaTime) testData.plasmaTime = 0;
                 testData.plasmaTime++;
-                
                 const imageData = ctx.createImageData(canvas.width, canvas.height);
                 const data = imageData.data;
-                
                 for (let i = 0; i < canvas.width; i++) {
                     for (let j = 0; j < canvas.height; j++) {
                         const idx = (j * canvas.width + i) * 4;
-                        
-                        const v1 = Math.sin((i + testData.plasmaTime) * 0.05) * 127 + 128;
-                        const v2 = Math.sin((j + testData.plasmaTime) * 0.05) * 127 + 128;
-                        const v3 = Math.sin((i + j + testData.plasmaTime) * 0.05) * 127 + 128;
-                        
-                        data[idx] = v1;
-                        data[idx + 1] = v2;
-                        data[idx + 2] = v3;
-                        data[idx + 3] = 255;
+                        const v1 = Math.sin((i + testData.plasmaTime) * 0.02) * 127 + 128;
+                        const v2 = Math.sin((j + testData.plasmaTime) * 0.02) * 127 + 128;
+                        const v3 = Math.sin((i + j + testData.plasmaTime) * 0.02) * 127 + 128;
+                        data[idx] = v1; data[idx + 1] = v2; data[idx + 2] = v3; data[idx + 3] = 255;
                     }
                 }
-                
                 ctx.putImageData(imageData, 0, 0);
             },
-            
+            mandelbrot() {
+                if (!testData.mandTime) testData.mandTime = 0;
+                testData.mandTime += 0.005;
+                const imageData = ctx.createImageData(canvas.width, canvas.height);
+                const data = imageData.data;
+                for (let i = 0; i < canvas.width; i += 2) {
+                    for (let j = 0; j < canvas.height; j += 2) {
+                        const re = (i / canvas.width - 0.5) * 4 + testData.mandTime;
+                        const im = (j / canvas.height - 0.5) * 4;
+                        let zr = 0, zi = 0, iter = 0;
+                        for (; iter < 100 && zr * zr + zi * zi < 4; iter++) {
+                            const tmp = zr * zr - zi * zi + re;
+                            zi = 2 * zr * zi + im;
+                            zr = tmp;
+                        }
+                        const idx = (j * canvas.width + i) * 4;
+                        data[idx] = iter * 2; data[idx + 1] = iter * 1.5; data[idx + 2] = iter; data[idx + 3] = 255;
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+            },
+            tunnel() {
+                if (!testData.tunnelTime) testData.tunnelTime = 0;
+                testData.tunnelTime += 3;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < 30; i++) {
+                    const progress = (testData.tunnelTime / 100 + i * 0.05) % 1;
+                    const size = canvas.width * (1 - progress);
+                    const alpha = 1 - progress;
+                    ctx.strokeStyle = `hsla(${(testData.tunnelTime + i * 12) % 360}, 100%, 50%, ${alpha})`;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.rect(canvas.width / 2 - size / 2, canvas.height / 2 - size / 2, size, size);
+                    ctx.stroke();
+                }
+            },
+            starfield() {
+                if (!testData.stars) {
+                    testData.stars = Array(300).fill().map(() => ({x: Math.random() * canvas.width - canvas.width / 2, y: Math.random() * canvas.height - canvas.height / 2, z: Math.random() * 100}));
+                }
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                testData.stars.forEach(star => {
+                    star.z -= 1.5;
+                    if (star.z <= 0) star.z = 100;
+                    const x = (star.x / star.z) * 150 + canvas.width / 2;
+                    const y = (star.y / star.z) * 150 + canvas.height / 2;
+                    const size = (1 - star.z / 100) * 4;
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(x, y, size, size);
+                });
+            },
+            draw() {
+                if (!testData.drawing) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+                ctx.strokeStyle = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(mouseX, mouseY);
+                ctx.lineTo(mouseX + (Math.random() - 0.5) * 30, mouseY + (Math.random() - 0.5) * 30);
+                ctx.stroke();
+            },
+            noisefield() {
+                if (!testData.noiseTime) testData.noiseTime = 0;
+                testData.noiseTime += 0.05;
+                const imageData = ctx.createImageData(canvas.width, canvas.height);
+                const data = imageData.data;
+                for (let i = 0; i < canvas.width; i += 3) {
+                    for (let j = 0; j < canvas.height; j += 3) {
+                        const val = Math.abs(Math.sin(i * 0.005 + testData.noiseTime) * Math.sin(j * 0.005 + testData.noiseTime)) * 255;
+                        const idx = (j * canvas.width + i) * 4;
+                        data[idx] = val; data[idx + 1] = val * 0.7; data[idx + 2] = val * 0.4; data[idx + 3] = 255;
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+            },
+            attractor() {
+                if (!testData.attractors) {
+                    testData.attractors = Array(500).fill().map(() => ({x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: 0, vy: 0}));
+                }
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                testData.attractors.forEach(p => {
+                    const dx = mouseX - p.x;
+                    const dy = mouseY - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+                    p.vx += (dx / dist) * 0.5;
+                    p.vy += (dy / dist) * 0.5;
+                    p.vx *= 0.9;
+                    p.vy *= 0.9;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    ctx.fillStyle = '#0f0';
+                    ctx.fillRect(p.x, p.y, 2, 2);
+                });
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 100, 0, Math.PI * 2);
+                ctx.fill();
+            },
             cpu() {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                if (!testData.cpuTime) testData.cpuTime = 0;
-                testData.cpuTime++;
-                
-                ctx.fillStyle = '#0f0';
-                ctx.font = '20px monospace';
-                
-                let sum = 0;
-                for (let i = 0; i < 1000000; i++) {
-                    sum += Math.sqrt(i) * Math.sin(i) * Math.cos(i);
+                let result = 0;
+                for (let i = 0; i < 5000000; i++) {
+                    result += Math.sqrt(i) * Math.sin(i);
                 }
-                
-                ctx.fillText('CPU Stress Test Running...', 20, 40);
-                ctx.fillText(`Iterations: ${testData.cpuTime * 1000000}`, 20, 80);
-                ctx.fillText(`Result: ${(sum % 1000).toFixed(2)}`, 20, 120);
+                ctx.fillStyle = '#0f0';
+                ctx.font = 'bold 48px monospace';
+                ctx.fillText('CPU LOAD', canvas.width / 2 - 150, 100);
+                ctx.font = '32px monospace';
+                ctx.fillText('Processing...', canvas.width / 2 - 100, 200);
+                ctx.fillText(`Progress: ${Math.floor(frameCount % 100)}%`, canvas.width / 2 - 150, 280);
+            },
+            ram() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if (!testData.memBlocks) {
+                    testData.memBlocks = [];
+                    for (let i = 0; i < 100; i++) {
+                        testData.memBlocks.push(new Float32Array(10000));
+                    }
+                }
+                testData.memBlocks.forEach((block, i) => {
+                    for (let j = 0; j < block.length; j++) {
+                        block[j] = Math.random();
+                    }
+                });
+                ctx.fillStyle = '#0f0';
+                ctx.font = 'bold 48px monospace';
+                ctx.fillText('RAM TEST', canvas.width / 2 - 130, 100);
+                ctx.font = '32px monospace';
+                ctx.fillText('Memory: 4 MB', canvas.width / 2 - 100, 200);
+                ctx.fillText(`Status: ${Math.floor(frameCount % 100)}%`, canvas.width / 2 - 130, 280);
             }
         };
         
         function animate() {
             frameCount++;
-            
             const now = Date.now();
             if (now - lastTime >= 1000) {
                 fps = frameCount;
                 frameCount = 0;
                 lastTime = now;
             }
-            
             fpsDisplay.textContent = `FPS: ${fps}`;
             
             if (running && tests[currentTest]) {
                 tests[currentTest]();
-            } else if (!running) {
-                ctx.fillStyle = '#1a1a1a';
+            } else if (!running && !allTestMode) {
+                ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
             
