@@ -408,7 +408,7 @@
                 systemTests.forEach(t => { if (key === t.key) startTest(t.id, t.name); });
                 if (key === 'Escape') backToMenu();
             } else if (!results.classList.contains('hide')) {
-                if (key === 'Escape') backToMenu();
+                if (key === 'Escape' || key === 'E') backToMenu();
             } else if (running && (key === 'Escape' || key === 'E')) {
                 stopTest();
             }
@@ -536,7 +536,7 @@
                 <div style="margin-top: 60px; text-align: center; font-size: 20px; color: var(--neon-yellow);">
                     ${getRecommendations(avgFps)}
                 </div>
-                <div style="margin-top: 40px; text-align: center; color: #888; font-size: 16px;">Press [ESC] to go back</div>
+                <div style="margin-top: 40px; text-align: center; color: #888; font-size: 16px;">Press [E] or [ESC] to go back</div>
             `;
             document.getElementById('result-content').innerHTML = html;
         }
