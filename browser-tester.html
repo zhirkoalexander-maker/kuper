@@ -225,6 +225,51 @@
             opacity: 0.8;
         }
         
+        .difficulty-options {
+            margin-top: 10px;
+            margin-left: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .diff-easy, .diff-medium, .diff-hard {
+            padding: 5px 12px;
+            border: 1px solid;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+        
+        .diff-easy {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+        
+        .diff-easy:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+        
+        .diff-medium {
+            border-color: var(--neon-yellow);
+            color: var(--neon-yellow);
+        }
+        
+        .diff-medium:hover {
+            background: rgba(255, 255, 0, 0.2);
+            box-shadow: 0 0 10px var(--neon-yellow);
+        }
+        
+        .diff-hard {
+            border-color: var(--neon-magenta);
+            color: var(--neon-magenta);
+        }
+        
+        .diff-hard:hover {
+            background: rgba(255, 0, 255, 0.2);
+            box-shadow: 0 0 10px var(--neon-magenta);
+        }
+        
         .footer { 
             margin-top: 60px;
             font-size: 22px;
@@ -330,21 +375,23 @@
         let mouseY = canvas.height / 2;
         let mousePressed = false;
         let history = loadHistory();
+        let currentDifficulty = 'medium';
+        let currentTestObj = null;
         
         const fpsTests = [
-            { key: '1', name: '⚡ Particle Storm', id: 'particlestorm', desc: 'Extreme fill rate test - 5000+ particles' },
-            { key: '2', name: '🔷 Polygon Rush', id: 'polygonrush', desc: '100 rotating polygons chasing cursor' },
-            { key: '3', name: '📱 Matrix Rain', id: 'matrixrain', desc: 'High-speed character rendering' },
-            { key: '4', name: '⚡ Lightning Storm', id: 'lightningstorm', desc: 'Random lightning bolt rendering' },
-            { key: '5', name: '🌀 Gravity Fields', id: 'gravityfields', desc: '1000 particles with physics' },
-            { key: '6', name: '⚽ Bouncing Balls', id: 'bouncingballs', desc: '150 balls with collision detection' },
-            { key: '7', name: '🔥 Plasma Effect', id: 'plasmaeffect', desc: 'Complex mathematical visualization' },
-            { key: '8', name: '🎨 Mandelbrot', id: 'mandelbrot', desc: 'CPU-intensive fractal computation' },
-            { key: '9', name: '🌌 Tunnel Effect', id: 'tunneleffect', desc: '3D perspective rendering' },
-            { key: '0', name: '⭐ Starfield', id: 'starfield', desc: '500 moving 3D stars' },
-            { key: 'Q', name: '✏️ Interactive Draw', id: 'interactivedraw', desc: 'Real-time drawing with mouse' },
-            { key: 'W', name: '🌊 Noise Field', id: 'noisefield', desc: 'Organic noise generation' },
-            { key: 'E', name: '✨ Particle Attractor', id: 'particleattractor', desc: '1500 particles following cursor' }
+            { key: '1', name: '⚡ Particle Storm', id: 'particlestorm', desc: 'Extreme fill rate test', difficulties: { easy: 2000, medium: 5000, hard: 10000 } },
+            { key: '2', name: '🔷 Polygon Rush', id: 'polygonrush', desc: 'Rotating polygons', difficulties: { easy: 40, medium: 80, hard: 150 } },
+            { key: '3', name: '📱 Matrix Rain', id: 'matrixrain', desc: 'Character rendering', difficulties: { easy: 60, medium: 120, hard: 200 } },
+            { key: '4', name: '⚡ Lightning Storm', id: 'lightningstorm', desc: 'Lightning rendering', difficulties: { easy: 3, medium: 8, hard: 15 } },
+            { key: '5', name: '🌀 Gravity Fields', id: 'gravityfields', desc: 'Physics simulation', difficulties: { easy: 500, medium: 1000, hard: 2000 } },
+            { key: '6', name: '⚽ Bouncing Balls', id: 'bouncingballs', desc: 'Collision detection', difficulties: { easy: 75, medium: 150, hard: 300 } },
+            { key: '7', name: '🔥 Plasma Effect', id: 'plasmaeffect', desc: 'Mathematical visualization', difficulties: { easy: 100, medium: 200, hard: 400 } },
+            { key: '8', name: '🎨 Mandelbrot', id: 'mandelbrot', desc: 'CPU-intensive fractal', difficulties: { easy: 50, medium: 100, hard: 200 } },
+            { key: '9', name: '🌌 Tunnel Effect', id: 'tunneleffect', desc: '3D perspective', difficulties: { easy: 15, medium: 30, hard: 50 } },
+            { key: '0', name: '⭐ Starfield', id: 'starfield', desc: 'Moving 3D stars', difficulties: { easy: 250, medium: 500, hard: 1000 } },
+            { key: 'Q', name: '✏️ Interactive Draw', id: 'interactivedraw', desc: 'Mouse drawing', difficulties: { easy: 10, medium: 50, hard: 100 } },
+            { key: 'W', name: '🌊 Noise Field', id: 'noisefield', desc: 'Noise generation', difficulties: { easy: 100, medium: 200, hard: 400 } },
+            { key: 'E', name: '✨ Particle Attractor', id: 'particleattractor', desc: 'Particle effects', difficulties: { easy: 750, medium: 1500, hard: 3000 } }
         ];
         
         const systemTests = [
@@ -402,10 +449,9 @@
                 if (key === '3') showHistory();
                 if (key === 'Escape' || key === 'E') exitApp();
             } else if (!fpsMenu.classList.contains('hide')) {
-                fpsTests.forEach(t => { if (key === t.key) startTest(t.id, t.name); });
                 if (key === 'Escape') backToMenu();
             } else if (!systemMenu.classList.contains('hide')) {
-                systemTests.forEach(t => { if (key === t.key) startTest(t.id, t.name); });
+                systemTests.forEach(t => { if (key === t.key) startTest(t.id, t.name, 'medium'); });
                 if (key === 'Escape') backToMenu();
             } else if (!results.classList.contains('hide')) {
                 if (key === 'Escape' || key === 'E') backToMenu();
@@ -429,7 +475,7 @@
             fpsMenu.classList.remove('hide');
             let html = '';
             fpsTests.forEach(t => {
-                html += `<div class="test-item"><span class="test-key">[${t.key}]</span><span class="test-name">${t.name}</span><div class="test-desc">${t.desc}</div></div>`;
+                html += `<div class="test-item"><span class="test-key">[${t.key}]</span><span class="test-name">${t.name}</span><div class="test-desc">${t.desc}</div><div class="difficulty-options"><span class="diff-easy" onclick="startTest('${t.id}', '${t.name}', 'easy')">EASY</span> <span class="diff-medium" onclick="startTest('${t.id}', '${t.name}', 'medium')">MEDIUM</span> <span class="diff-hard" onclick="startTest('${t.id}', '${t.name}', 'hard')">HARD</span></div></div>`;
             });
             document.getElementById('fps-list').innerHTML = html;
         }
@@ -483,7 +529,7 @@
             document.getElementById('exit-hint').textContent = '';
         }
         
-        function startTest(testId, testName) {
+        function startTest(testId, testName, difficulty) {
             const menu = document.getElementById('menu');
             const fpsMenu = document.getElementById('fps-menu');
             const systemMenu = document.getElementById('system-menu');
@@ -492,6 +538,8 @@
             systemMenu.classList.add('hide');
             
             currentTest = testId;
+            currentDifficulty = difficulty || 'medium';
+            currentTestObj = fpsTests.find(t => t.id === testId) || systemTests.find(t => t.id === testId);
             running = true;
             frameCount = 0;
             fpsCounter = 0;
@@ -500,16 +548,31 @@
             avgFpsArray = [];
             testData = {};
             
-            document.getElementById('test-name').textContent = testName.toUpperCase();
+            document.getElementById('test-name').textContent = `${testName.toUpperCase()} [${currentDifficulty.toUpperCase()}]`;
             document.getElementById('exit-hint').textContent = '>> Press [E] or [ESC] to EXIT <<';
         }
         
-        function stopTest() {
+        function stopTest(crashed = false) {
             if (!running) return;
             running = false;
             const avgFps = avgFpsArray.length > 0 ? avgFpsArray.reduce((a,b)=>a+b)/avgFpsArray.length : fps;
             saveResult(document.getElementById('test-name').textContent, avgFps, minFps, maxFps);
-            showTestResults(avgFps, minFps, maxFps);
+            if (crashed) showCrashMessage();
+            else showTestResults(avgFps, minFps, maxFps);
+        }
+        
+        function showCrashMessage() {
+            const menu = document.getElementById('menu');
+            const results = document.getElementById('results');
+            menu.classList.add('hide');
+            results.classList.remove('hide');
+            
+            const html = `
+                <div style="text-align: center; padding: 80px 40px; color: #ff6666; font-size: 56px; font-weight: bold;">💥 SORRY 💥</div>
+                <div style="text-align: center; padding: 40px; color: #ff6666; font-size: 32px;">YOUR GAME CRASHED</div>
+                <div style="margin-top: 100px; text-align: center; color: #888; font-size: 16px;">Press [E] or [ESC] to go back</div>
+            `;
+            document.getElementById('result-content').innerHTML = html;
         }
         
         function showTestResults(avgFps, minFps, maxFps) {
@@ -527,16 +590,16 @@
             else if (avgFps >= 30) { score = '✗ LOW'; color = '#ff6600'; }
             
             const html = `
-                <div style="text-align: center; padding: 40px; color: ${color}; font-size: 48px; font-weight: bold;">${score}</div>
-                <div style="text-align: center; font-size: 36px;">
-                    <div style="color: var(--neon-cyan); margin: 20px 0;">AVG: <strong>${Math.round(avgFps)}</strong> FPS</div>
-                    <div style="color: var(--neon-green); margin: 20px 0;">MAX: <strong>${Math.round(maxFps)}</strong> FPS</div>
-                    <div style="color: var(--neon-magenta); margin: 20px 0;">MIN: <strong>${Math.round(minFps)}</strong> FPS</div>
+                <div style="text-align: center; padding: 60px 40px; color: ${color}; font-size: 72px; font-weight: bold;">${score}</div>
+                <div style="text-align: center; font-size: 48px;">
+                    <div style="color: var(--neon-cyan); margin: 30px 0;">AVG: <strong>${Math.round(avgFps)}</strong> FPS</div>
+                    <div style="color: var(--neon-green); margin: 30px 0;">MAX: <strong>${Math.round(maxFps)}</strong> FPS</div>
+                    <div style="color: var(--neon-magenta); margin: 30px 0;">MIN: <strong>${Math.round(minFps)}</strong> FPS</div>
                 </div>
-                <div style="margin-top: 60px; text-align: center; font-size: 20px; color: var(--neon-yellow);">
+                <div style="margin-top: 80px; text-align: center; font-size: 24px; color: var(--neon-yellow);">
                     ${getRecommendations(avgFps)}
                 </div>
-                <div style="margin-top: 40px; text-align: center; color: #888; font-size: 16px;">Press [E] or [ESC] to go back</div>
+                <div style="margin-top: 60px; text-align: center; color: #888; font-size: 18px;">Press [E] or [ESC] to go back</div>
             `;
             document.getElementById('result-content').innerHTML = html;
         }
@@ -977,29 +1040,35 @@
         };
         
         function animate() {
-            frameCount++;
-            fpsCounter++;
-            const now = performance.now();
-            const deltaTime = now - lastTime;
-            
-            if (deltaTime >= 1000) {
-                fps = Math.round((fpsCounter * 1000) / deltaTime);
-                document.getElementById('fps').textContent = `FPS: ${fps}`;
-                if (running) {
-                    minFps = Math.min(minFps, fps);
-                    maxFps = Math.max(maxFps, fps);
-                    avgFpsArray.push(fps);
-                    updateStats();
+            try {
+                frameCount++;
+                fpsCounter++;
+                const now = performance.now();
+                const deltaTime = now - lastTime;
+                
+                if (deltaTime >= 1000) {
+                    fps = Math.round((fpsCounter * 1000) / deltaTime);
+                    document.getElementById('fps').textContent = `FPS: ${fps}`;
+                    if (running) {
+                        minFps = Math.min(minFps, fps);
+                        maxFps = Math.max(maxFps, fps);
+                        avgFpsArray.push(fps);
+                        updateStats();
+                    }
+                    fpsCounter = 0;
+                    lastTime = now;
                 }
-                fpsCounter = 0;
-                lastTime = now;
-            }
-            
-            if (running && tests[currentTest]) {
-                tests[currentTest]();
-            } else if (!running) {
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                if (running && tests[currentTest]) {
+                    tests[currentTest]();
+                } else if (!running) {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+            } catch(e) {
+                if (running) {
+                    stopTest(true);
+                }
             }
             
             setTimeout(animate, 0);
