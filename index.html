@@ -15,7 +15,7 @@
     <canvas id="gameCanvas"></canvas>
     <div id="status">🔄 Loading fps_tester.js...</div>
 
-    <script src="fps_tester.js" onload="initApp()" onerror="statusMsg('✗ Script failed to load')"></script>
+    <script src="fps_tester.js" onload="window._scriptLoaded = true;" onerror="console.error('Script load error')"></script>
     <script>
         // Setup canvas
         const canvas = document.getElementById('gameCanvas');
@@ -50,34 +50,41 @@
         function initApp() {
             statusMsg('⏳ Initializing app...');
             
-            setTimeout(() => {
-                try {
-                    if (typeof FPSTesterApp === 'undefined') {
-                        statusMsg('✗ FPSTesterApp not found - script may not have loaded');
-                        console.error('Available globals:', Object.keys(window).filter(k => k.includes('FPS') || k.includes('App')));
-                        return;
-                    }
-                    
-                    statusMsg('✓ FPSTesterApp found, starting...');
-                    const app = new FPSTesterApp('gameCanvas');
-                    
-                    app.run().catch(e => {
-                        statusMsg('✗ Runtime error: ' + e.message);
-                        console.error(e);
-                    });
-                    
-                    setTimeout(() => {
-                        if (!document.getElementById('status').textContent.startsWith('✗')) {
-                            document.getElementById('status').style.display = 'none';
-                        }
-                    }, 2000);
-                    
-                } catch (e) {
-                    statusMsg('✗ Error: ' + e.message);
-                    console.error(e);
+            try {
+                if (typeof FPSTesterApp === 'undefined') {
+                    statusMsg('✗ FPSTesterApp not found in window');
+                    return;
                 }
-            }, 100);
+                
+                statusMsg('✓ FPSTesterApp found, creating instance...');
+                const app = new FPSTesterApp('gameCanvas');
+                
+                statusMsg('✓ Running app...');
+                app.run();
+                
+                setTimeout(() => {
+                    if (!document.getElementById('status').textContent.startsWith('✗')) {
+                        document.getElementById('status').style.display = 'none';
+                    }
+                }, 2000);
+                
+            } catch (e) {
+                statusMsg('✗ ' + e.message);
+                console.error('Init error:', e);
+            }
         }
+        
+        // Wait for script to load
+        let waitCount = 0;
+        const checkScript = setInterval(() => {
+            if (window._scriptLoaded || typeof FPSTesterApp !== 'undefined') {
+                clearInterval(checkScript);
+                initApp();
+            } else if (++waitCount > 50) {
+                clearInterval(checkScript);
+                statusMsg('✗ Script load timeout');
+            }
+        }, 100);
     </script>
 </body>
 </html>
