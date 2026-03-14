@@ -1465,8 +1465,155 @@ class FPSTesterApp {
         continue;
       }
 
-      // TODO: Run game mode and show results
+      // Run selected game mode and show results
+      let gameMode = null;
+      
+      if (category === 'fps') {
+        const testName = await this.selectFPSTest();
+        if (!testName) continue;
+        gameMode = this.createFPSTestInstance(testName);
+      } else if (category === 'system') {
+        const testName = await this.selectSystemTest();
+        if (!testName) continue;
+        gameMode = this.createSystemTestInstance(testName);
+      }
+      
+      if (gameMode) {
+        // Set parent reference for input handling
+        gameMode.parent = this;
+        
+        // Run the game mode
+        await gameMode.run(this.canvas, this.ctx);
+        
+        // Show results
+        await showResults(this.canvas, this.ctx, gameMode);
+      }
     }
+  }
+
+  createFPSTestInstance(testName) {
+    switch (testName) {
+      case 'ParticleStorm': return new ParticleStorm();
+      case 'PolygonRush': return new PolygonRush();
+      case 'MatrixRain': return new MatrixRain();
+      case 'InteractiveDraw': return new InteractiveDraw();
+      default: return null;
+    }
+  }
+
+  createSystemTestInstance(testName) {
+    switch (testName) {
+      case 'CPUTest': return new CPUTest();
+      case 'RAMTest': return new RAMTest();
+      default: return null;
+    }
+  }
+
+  async selectFPSTest() {
+    const tests = ['ParticleStorm', 'PolygonRush', 'MatrixRain', 'InteractiveDraw'];
+    return await this.selectTest('FPS Tests', tests);
+  }
+
+  async selectSystemTest() {
+    const tests = ['CPUTest', 'RAMTest'];
+    return await this.selectTest('System Tests', tests);
+  }
+
+  async selectTest(title, tests) {
+    return new Promise((resolve) => {
+      let highlight = 0;
+      let animating = true;
+
+      const drawMenu = () => {
+        // Clean background
+        this.ctx.fillStyle = '#0a0a0a';
+        this.ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        // Title
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 70px sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(title, WINDOW_WIDTH / 2, 100);
+
+        // Subtitle
+        this.ctx.fillStyle = '#888888';
+        this.ctx.font = '28px sans-serif';
+        this.ctx.fillText('Choose a test', WINDOW_WIDTH / 2, 160);
+
+        // Draw test options
+        const startY = 240;
+        const spacing = 130;
+
+        for (let i = 0; i < tests.length; i++) {
+          const isSelected = i === highlight;
+          const y = startY + i * spacing;
+
+          // Card styling
+          const colors = ['#5ddde4', '#ff6b6b', '#51cf66', '#ffd43b'];
+          const color = colors[i % colors.length];
+
+          // Card background
+          if (isSelected) {
+            this.ctx.fillStyle = color;
+            this.ctx.globalAlpha = 0.1;
+            this.ctx.fillRect(150, y, WINDOW_WIDTH - 300, 100);
+            this.ctx.globalAlpha = 1.0;
+          }
+
+          // Card border
+          this.ctx.strokeStyle = isSelected ? color : '#333333';
+          this.ctx.lineWidth = isSelected ? 3 : 2;
+          this.ctx.strokeRect(150, y, WINDOW_WIDTH - 300, 100);
+
+          // Test name
+          this.ctx.fillStyle = isSelected ? color : '#cccccc';
+          this.ctx.font = isSelected ? 'bold 40px sans-serif' : '36px sans-serif';
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText(`${i + 1}. ${tests[i]}`, WINDOW_WIDTH / 2, y + 60);
+        }
+
+        // Instructions
+        this.ctx.fillStyle = '#666666';
+        this.ctx.font = '20px sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Use Arrow Keys or 1-' + tests.length + ' • ENTER to start • E to back', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80);
+
+        if (animating) {
+          requestAnimationFrame(drawMenu);
+        }
+      };
+
+      const handleKeyPress = (e) => {
+        if (e.code === 'ArrowUp') {
+          highlight = (highlight - 1 + tests.length) % tests.length;
+        } else if (e.code === 'ArrowDown') {
+          highlight = (highlight + 1) % tests.length;
+        } else if (e.code === 'Enter' || e.code === 'Space') {
+          e.preventDefault();
+          animating = false;
+          document.removeEventListener('keydown', handleKeyPress);
+          resolve(tests[highlight]);
+        } else if (e.key === 'e' || e.key === 'E') {
+          animating = false;
+          document.removeEventListener('keydown', handleKeyPress);
+          resolve(null);
+        } else if (/^[1-9]$/.test(e.key)) {
+          const idx = parseInt(e.key) - 1;
+          if (idx < tests.length) {
+            animating = false;
+            document.removeEventListener('keydown', handleKeyPress);
+            resolve(tests[idx]);
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyPress);
+      drawMenu();
+    });
+  }
+
+  run() {
+    this.start().catch(err => console.error('Game error:', err));
   }
 }
 
