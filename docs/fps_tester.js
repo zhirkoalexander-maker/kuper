@@ -303,9 +303,17 @@ class GameMode {
         const dt = (current_time - last_frame_time) / 1000.0;
         last_frame_time = current_time;
 
+        // Clamp dt to prevent large jumps
+        const safe_dt = Math.min(dt, 0.05);
+
         // Update
-        const remaining_time = this.updateTestTimer(dt);
-        this.update(dt, this.parent.keys, this.parent.mouse);
+        const remaining_time = this.updateTestTimer(safe_dt);
+        
+        // Use parent's keys and mouse if available
+        const keys = this.parent ? this.parent.keys : {};
+        const mouse = this.parent ? this.parent.mouse : { x: 0, y: 0, pressed: false, clicked: false };
+        
+        this.update(safe_dt, keys, mouse);
 
         // Clear canvas
         ctx.fillStyle = rgbToCSS(COLORS.BLACK);
@@ -319,14 +327,20 @@ class GameMode {
         drawText(ctx, `Time: ${Math.ceil(remaining_time)}s`, 50, 100, COLORS.WHITE, 32);
 
         const stats = this.getStats();
-        const fps_display = this.getFPSDisplay(1 / dt, dt);
+        const fps_display = this.getFPSDisplay(1 / safe_dt, safe_dt);
         drawText(ctx, `FPS: ${fps_display}`, WINDOW_WIDTH - 250, 50, COLORS.GREEN, 32);
+
+        // Draw mode hints
+        const hint = remaining_time > 0 ? 'Press E to exit test' : 'Test completed!';
+        drawCenteredText(ctx, hint, WINDOW_HEIGHT - 50, COLORS.WHITE, 28);
+
+        // Reset mouse clicked flag
+        if (mouse) mouse.clicked = false;
 
         // Check if test is complete
         if (this.test_completed && is_running) {
           is_running = false;
-          document.removeEventListener('keydown', handleInput);
-          document.removeEventListener('mousemove', handleInput);
+          document.removeEventListener('keydown', handleKeyDown);
           resolve();
           return;
         }
@@ -336,21 +350,16 @@ class GameMode {
         }
       };
 
-      const handleInput = (e) => {
+      const handleKeyDown = (e) => {
         if (e.key === 'e' || e.key === 'E') {
           is_running = false;
-          document.removeEventListener('keydown', handleInput);
+          document.removeEventListener('keydown', handleKeyDown);
           this.test_completed = true;
           resolve();
         }
-
-        // Update keys
-        if (this.parent) {
-          this.parent.keys[e.code] = e.type === 'keydown';
-        }
       };
 
-      document.addEventListener('keydown', handleInput);
+      document.addEventListener('keydown', handleKeyDown);
       requestAnimationFrame(gameLoop);
     });
   }
