@@ -1187,80 +1187,65 @@ function getPerformanceRecommendations(avg_fps, min_fps, max_fps, difficulty = 1
 // ==========================
 
 /**
- * Welcome screen with animation
+ * Welcome screen - Clean modern design
  */
 async function showWelcomeScreen(canvas, ctx) {
   return new Promise((resolve) => {
-    let alpha_timer = 0;
+    let frame = 0;
     let animating = true;
 
     function drawWelcome() {
-      alpha_timer++;
+      frame++;
 
-      ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+      // Clean dark background
+      ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-      // Draw animated stars
-      for (let i = 0; i < 30; i++) {
-        const x = (i * 47 + alpha_timer * 2) % WINDOW_WIDTH;
-        const y = (i * 31) % WINDOW_HEIGHT;
-        ctx.fillStyle = 'rgb(100, 100, 100)';
-        ctx.fillRect(x, y, 2, 2);
-      }
+      // Gradient background (optional accent)
+      const grad = ctx.createLinearGradient(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+      grad.addColorStop(0, 'rgba(20, 20, 30, 0.5)');
+      grad.addColorStop(1, 'rgba(15, 15, 25, 0.5)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-      // Title
-      drawCenteredText(ctx, 'FPS TESTER', 100, COLORS.CYAN, 100);
+      // Main title
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 120px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('FPS TESTER', WINDOW_WIDTH / 2, 200);
 
-      // Subtitle
-      drawCenteredText(ctx, 'Performance Analysis Tool', 220, COLORS.YELLOW, 60);
+      // Subtitle with clean style
+      ctx.fillStyle = '#888888';
+      ctx.font = '32px sans-serif';
+      ctx.fillText('Performance Analysis Tool', WINDOW_WIDTH / 2, 280);
 
-      // Info lines
-      const lines = [
-        '✓ Analyze your computer\'s gaming performance',
-        '✓ Test with interactive game modes',
-        '✓ Monitor CPU, RAM, and Disk I/O',
-        '✓ Get personalized recommendations',
-        '',
-        '🌐 Web version coming soon!',
-        '   Dual-screen architecture for weak PCs:',
-        '   - Test screen + Statistics screen',
-        '   - Automatic restart on crash',
+      // Info section
+      ctx.fillStyle = '#666666';
+      ctx.font = '24px sans-serif';
+      const infoLines = [
+        'Measure your computer\'s gaming performance',
+        'Real-time FPS tracking and statistics',
+        'Game recommendations based on your results',
       ];
-
-      let y_pos = 330;
-      for (const line of lines) {
-        if (line === '') {
-          y_pos += 30;
-          continue;
-        }
-
-        const color = line.startsWith('🌐') || line.startsWith('   ')
-          ? COLORS.MAGENTA
-          : COLORS.GREEN;
-        const fontSize = line.startsWith('   ') ? 28 : 36;
-
-        drawCenteredText(ctx, line, y_pos, color, fontSize);
-        y_pos += 45;
+      
+      let y = 400;
+      for (const line of infoLines) {
+        ctx.fillText(line, WINDOW_WIDTH / 2, y);
+        y += 50;
       }
 
-      // Pulsing hint
-      const pulse = Math.abs(Math.sin(alpha_timer * 0.05));
-      const brightness = Math.round(255 * (0.5 + pulse * 0.5));
-
-      drawCenteredText(
-        ctx,
-        'Press SPACE to continue',
-        WINDOW_HEIGHT - 100,
-        [brightness, brightness, brightness],
-        48
-      );
+      // Pulsing hint at bottom
+      const pulse = Math.abs(Math.sin(frame * 0.05));
+      const opacity = Math.round(255 * (0.4 + pulse * 0.4));
+      ctx.fillStyle = `rgba(150, 150, 150, ${opacity / 255})`;
+      ctx.font = '28px sans-serif';
+      ctx.fillText('Press SPACE to continue', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80);
 
       if (animating) {
         requestAnimationFrame(drawWelcome);
       }
     }
 
-    // Handle keyboard
     const handleKeyPress = (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
@@ -1276,110 +1261,83 @@ async function showWelcomeScreen(canvas, ctx) {
 }
 
 /**
- * Main menu with animated background
+ * Main menu - Clean modern design
  */
 async function showMainMenu(canvas, ctx) {
   return new Promise((resolve) => {
     let highlight = 0;
     let animating = true;
-    let frame = 0;
-
-    // Background particles
-    const particles = [];
-    for (let i = 0; i < 20; i++) {
-      particles.push({
-        x: Math.random() * WINDOW_WIDTH,
-        y: Math.random() * WINDOW_HEIGHT,
-        vx: randomFloat(-0.5, 0.5),
-        vy: randomFloat(-1, 0),
-        size: randomInt(1, 3),
-        color: randomChoice([COLORS.CYAN, COLORS.MAGENTA, COLORS.GREEN]),
-      });
-    }
 
     function drawMenu() {
-      frame++;
-
-      // Update particles
-      for (const p of particles) {
-        p.y += p.vy;
-        p.x += p.vx;
-        if (p.y < -10) {
-          p.y = WINDOW_HEIGHT + 10;
-          p.x = Math.random() * WINDOW_WIDTH;
-        }
-      }
-
-      ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+      // Clean background
+      ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-      // Draw background particles
-      for (const p of particles) {
-        drawCircle(ctx, p.x, p.y, p.size, p.color);
-      }
-
-      // Title with glow
-      for (let offset of [4, 2]) {
-        ctx.globalAlpha = 0.3;
-        drawCenteredText(ctx, 'FPS TESTER', 50, [50, 50, 0], 100);
-        ctx.globalAlpha = 1.0;
-      }
-      drawCenteredText(ctx, 'FPS TESTER', 50, COLORS.YELLOW, 100);
+      // Main title
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 80px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('FPS TESTER', WINDOW_WIDTH / 2, 100);
 
       // Subtitle
-      drawCenteredText(ctx, 'Select test category or settings', 170, COLORS.WHITE, 28);
+      ctx.fillStyle = '#888888';
+      ctx.font = '28px sans-serif';
+      ctx.fillText('Select test type', WINDOW_WIDTH / 2, 170);
 
-      // FPS Tests box
-      const fps_color = highlight === 0 ? COLORS.CYAN : COLORS.WHITE;
-      const fps_box_color = highlight === 0 ? COLORS.CYAN : [100, 100, 100];
-      const fps_box_width = highlight === 0 ? 5 : 1;
+      // Menu options - clean card style
+      const options = [
+        { title: 'FPS Tests', desc: 'Interactive performance tests', color: '#5ddde4' },
+        { title: 'System Tests', desc: 'CPU, RAM, and Disk monitoring', color: '#ff6b6b' },
+        { title: 'Settings', desc: 'Display and options', color: '#51cf66' },
+      ];
 
-      ctx.strokeStyle = rgbToCSS(fps_box_color);
-      ctx.lineWidth = fps_box_width;
-      ctx.strokeRect(50, 250, 400, 180);
+      const cardY = 300;
+      const cardSpacing = 280;
+      const cardWidth = 350;
+      const cardHeight = 150;
 
-      drawText(ctx, '1. FPS Tests', 80, 290, fps_color, 50);
-      drawText(ctx, 'Interactive game modes', 80, 340, COLORS.WHITE, 32);
+      for (let i = 0; i < options.length; i++) {
+        const isSelected = i === highlight;
+        const opt = options[i];
+        const x = (WINDOW_WIDTH / 2 - cardWidth / 2) + (i - 1) * cardSpacing;
 
-      // System Tests box
-      const sys_color = highlight === 1 ? COLORS.MAGENTA : COLORS.WHITE;
-      const sys_box_color = highlight === 1 ? COLORS.MAGENTA : [100, 100, 100];
-      const sys_box_width = highlight === 1 ? 5 : 1;
+        // Card background
+        if (isSelected) {
+          ctx.fillStyle = opt.color;
+          ctx.globalAlpha = 0.15;
+          ctx.fillRect(x, cardY, cardWidth, cardHeight);
+          ctx.globalAlpha = 1.0;
+        }
 
-      ctx.strokeStyle = rgbToCSS(sys_box_color);
-      ctx.lineWidth = sys_box_width;
-      ctx.strokeRect(500, 250, 400, 180);
+        // Card border
+        ctx.strokeStyle = isSelected ? opt.color : '#333333';
+        ctx.lineWidth = isSelected ? 3 : 2;
+        ctx.setLineDash([]);
+        ctx.strokeRect(x, cardY, cardWidth, cardHeight);
 
-      drawText(ctx, '2. System Tests', 530, 290, sys_color, 50);
-      drawText(ctx, 'Monitor CPU/RAM/Disk', 530, 340, COLORS.WHITE, 32);
+        // Title
+        ctx.fillStyle = isSelected ? opt.color : '#cccccc';
+        ctx.font = isSelected ? 'bold 32px sans-serif' : '28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(opt.title, x + cardWidth / 2, cardY + 50);
 
-      // Settings box
-      const set_color = highlight === 2 ? COLORS.GREEN : COLORS.WHITE;
-      const set_box_color = highlight === 2 ? COLORS.GREEN : [100, 100, 100];
-      const set_box_width = highlight === 2 ? 5 : 1;
+        // Description
+        ctx.fillStyle = '#777777';
+        ctx.font = '20px sans-serif';
+        ctx.fillText(opt.desc, x + cardWidth / 2, cardY + 110);
 
-      ctx.strokeStyle = rgbToCSS(set_box_color);
-      ctx.lineWidth = set_box_width;
-      ctx.strokeRect(950, 250, 400, 180);
+        // Number indicator
+        ctx.fillStyle = isSelected ? opt.color : '#555555';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${i + 1}`, x + 20, cardY + 30);
+      }
 
-      drawText(ctx, '3. Settings', 980, 290, set_color, 50);
-      drawText(ctx, 'Configure display', 980, 340, COLORS.WHITE, 32);
-
-      // Info
-      drawCenteredText(
-        ctx,
-        'Use ← → or A/D or ↑ ↓ to navigate | ENTER to select',
-        WINDOW_HEIGHT - 100,
-        COLORS.WHITE,
-        28
-      );
-      drawCenteredText(
-        ctx,
-        'Or press 1/2/3 | ESC to exit',
-        WINDOW_HEIGHT - 60,
-        COLORS.WHITE,
-        28
-      );
+      // Instructions
+      ctx.fillStyle = '#666666';
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Use Arrow Keys or 1/2/3 to select • ENTER to start • E to exit', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80);
 
       if (animating) {
         requestAnimationFrame(drawMenu);
@@ -1699,41 +1657,58 @@ class FPSTesterApp {
       let animating = true;
 
       const drawMenu = () => {
-        // Clear canvas
-        this.ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+        // Clean background
+        this.ctx.fillStyle = '#0a0a0a';
         this.ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
         // Title
-        drawCenteredText(this.ctx, title, 80, COLORS.CYAN, 80);
-        drawCenteredText(this.ctx, 'Select a test', 170, COLORS.WHITE, 40);
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 70px sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(title, WINDOW_WIDTH / 2, 100);
+
+        // Subtitle
+        this.ctx.fillStyle = '#888888';
+        this.ctx.font = '28px sans-serif';
+        this.ctx.fillText('Choose a test', WINDOW_WIDTH / 2, 160);
 
         // Draw test options
-        const startY = 280;
-        const spacing = 120;
+        const startY = 240;
+        const spacing = 130;
 
         for (let i = 0; i < tests.length; i++) {
           const isSelected = i === highlight;
-          const color = isSelected ? COLORS.CYAN : COLORS.WHITE;
-          const boxColor = isSelected ? COLORS.CYAN : [100, 100, 100];
+          const y = startY + i * spacing;
 
-          // Draw box
-          this.ctx.strokeStyle = rgbToCSS(boxColor);
-          this.ctx.lineWidth = isSelected ? 3 : 1;
-          this.ctx.strokeRect(100, startY + i * spacing, WINDOW_WIDTH - 200, 100);
+          // Card styling
+          const colors = ['#5ddde4', '#ff6b6b', '#51cf66', '#ffd43b'];
+          const color = colors[i % colors.length];
 
-          // Draw test name
-          const text = `${i + 1}. ${tests[i]}`;
-          drawCenteredText(this.ctx, text, startY + i * spacing + 50, color, 48);
+          // Card background
+          if (isSelected) {
+            this.ctx.fillStyle = color;
+            this.ctx.globalAlpha = 0.1;
+            this.ctx.fillRect(150, y, WINDOW_WIDTH - 300, 100);
+            this.ctx.globalAlpha = 1.0;
+          }
+
+          // Card border
+          this.ctx.strokeStyle = isSelected ? color : '#333333';
+          this.ctx.lineWidth = isSelected ? 3 : 2;
+          this.ctx.strokeRect(150, y, WINDOW_WIDTH - 300, 100);
+
+          // Test name
+          this.ctx.fillStyle = isSelected ? color : '#cccccc';
+          this.ctx.font = isSelected ? 'bold 40px sans-serif' : '36px sans-serif';
+          this.ctx.textAlign = 'center';
+          this.ctx.fillText(`${i + 1}. ${tests[i]}`, WINDOW_WIDTH / 2, y + 60);
         }
 
         // Instructions
-        drawCenteredText(
-          this.ctx,
-          'Use ↑ ↓ or 1-9 or mouse to select | ENTER to start | E to back',
-          WINDOW_HEIGHT - 80,
-          COLORS.WHITE,
-          28
-        );
+        this.ctx.fillStyle = '#666666';
+        this.ctx.font = '20px sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Use Arrow Keys or 1-' + tests.length + ' • ENTER to start • E to back', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80);
 
         if (animating) {
           requestAnimationFrame(drawMenu);
