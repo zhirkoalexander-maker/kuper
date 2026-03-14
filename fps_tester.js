@@ -293,7 +293,67 @@ class GameMode {
 
     return { avg, min, max };
   }
-}
+
+  run(canvas, ctx) {
+    return new Promise((resolve) => {
+      let last_frame_time = performance.now();
+      let is_running = true;
+
+      const gameLoop = (current_time) => {
+        const dt = (current_time - last_frame_time) / 1000.0;
+        last_frame_time = current_time;
+
+        // Update
+        const remaining_time = this.updateTestTimer(dt);
+        this.update(dt, this.parent.keys, this.parent.mouse);
+
+        // Clear canvas
+        ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+        ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        // Draw game
+        this.draw(ctx);
+
+        // Draw HUD
+        drawText(ctx, `${this.name}`, 50, 50, COLORS.CYAN, 48);
+        drawText(ctx, `Time: ${Math.ceil(remaining_time)}s`, 50, 100, COLORS.WHITE, 32);
+
+        const stats = this.getStats();
+        const fps_display = this.getFPSDisplay(1 / dt, dt);
+        drawText(ctx, `FPS: ${fps_display}`, WINDOW_WIDTH - 250, 50, COLORS.GREEN, 32);
+
+        // Check if test is complete
+        if (this.test_completed && is_running) {
+          is_running = false;
+          document.removeEventListener('keydown', handleInput);
+          document.removeEventListener('mousemove', handleInput);
+          resolve();
+          return;
+        }
+
+        if (is_running) {
+          requestAnimationFrame(gameLoop);
+        }
+      };
+
+      const handleInput = (e) => {
+        if (e.key === 'e' || e.key === 'E') {
+          is_running = false;
+          document.removeEventListener('keydown', handleInput);
+          this.test_completed = true;
+          resolve();
+        }
+
+        // Update keys
+        if (this.parent) {
+          this.parent.keys[e.code] = e.type === 'keydown';
+        }
+      };
+
+      document.addEventListener('keydown', handleInput);
+      requestAnimationFrame(gameLoop);
+    });
+  }
 
 // ==========================
 // GAME MODES
@@ -1570,8 +1630,134 @@ class FPSTesterApp {
         continue;
       }
 
-      // TODO: Run game mode and show results
+      // Run selected game mode and show results
+      let gameMode = null;
+      
+      if (category === 'fps') {
+        const testName = await this.selectFPSTest();
+        if (!testName) continue;
+        gameMode = this.createFPSTestInstance(testName);
+      } else if (category === 'system') {
+        const testName = await this.selectSystemTest();
+        if (!testName) continue;
+        gameMode = this.createSystemTestInstance(testName);
+      }
+      
+      if (gameMode) {
+        // Set parent reference for input handling
+        gameMode.parent = this;
+        
+        // Run the game mode
+        await gameMode.run(this.canvas, this.ctx);
+        
+        // Show results
+        await showResults(this.canvas, this.ctx, gameMode);
+      }
     }
+  }
+
+  createFPSTestInstance(testName) {
+    switch (testName) {
+      case 'ParticleStorm': return new ParticleStorm();
+      case 'PolygonRush': return new PolygonRush();
+      case 'MatrixRain': return new MatrixRain();
+      case 'InteractiveDraw': return new InteractiveDraw();
+      default: return null;
+    }
+  }
+
+  createSystemTestInstance(testName) {
+    switch (testName) {
+      case 'CPUTest': return new CPUTest();
+      case 'RAMTest': return new RAMTest();
+      default: return null;
+    }
+  }
+
+  async selectFPSTest() {
+    const tests = ['ParticleStorm', 'PolygonRush', 'MatrixRain', 'InteractiveDraw'];
+    return await this.selectTest('FPS Tests', tests);
+  }
+
+  async selectSystemTest() {
+    const tests = ['CPUTest', 'RAMTest'];
+    return await this.selectTest('System Tests', tests);
+  }
+
+  async selectTest(title, tests) {
+    return new Promise((resolve) => {
+      let highlight = 0;
+      let animating = true;
+
+      const drawMenu = () => {
+        // Clear canvas
+        this.ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+        this.ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        // Title
+        drawCenteredText(this.ctx, title, 80, COLORS.CYAN, 80);
+        drawCenteredText(this.ctx, 'Select a test', 170, COLORS.WHITE, 40);
+
+        // Draw test options
+        const startY = 280;
+        const spacing = 120;
+
+        for (let i = 0; i < tests.length; i++) {
+          const isSelected = i === highlight;
+          const color = isSelected ? COLORS.CYAN : COLORS.WHITE;
+          const boxColor = isSelected ? COLORS.CYAN : [100, 100, 100];
+
+          // Draw box
+          this.ctx.strokeStyle = rgbToCSS(boxColor);
+          this.ctx.lineWidth = isSelected ? 3 : 1;
+          this.ctx.strokeRect(100, startY + i * spacing, WINDOW_WIDTH - 200, 100);
+
+          // Draw test name
+          const text = `${i + 1}. ${tests[i]}`;
+          drawCenteredText(this.ctx, text, startY + i * spacing + 50, color, 48);
+        }
+
+        // Instructions
+        drawCenteredText(
+          this.ctx,
+          'Use ↑ ↓ or 1-9 or mouse to select | ENTER to start | E to back',
+          WINDOW_HEIGHT - 80,
+          COLORS.WHITE,
+          28
+        );
+
+        if (animating) {
+          requestAnimationFrame(drawMenu);
+        }
+      };
+
+      const handleKeyPress = (e) => {
+        if (e.code === 'ArrowUp') {
+          highlight = (highlight - 1 + tests.length) % tests.length;
+        } else if (e.code === 'ArrowDown') {
+          highlight = (highlight + 1) % tests.length;
+        } else if (e.code === 'Enter' || e.code === 'Space') {
+          e.preventDefault();
+          animating = false;
+          document.removeEventListener('keydown', handleKeyPress);
+          resolve(tests[highlight]);
+        } else if (e.key === 'e' || e.key === 'E') {
+          animating = false;
+          document.removeEventListener('keydown', handleKeyPress);
+          resolve(null);
+        } else if (/^[1-9]$/.test(e.key)) {
+          const idx = parseInt(e.key) - 1;
+          if (idx < tests.length) {
+            animating = false;
+            document.removeEventListener('keydown', handleKeyPress);
+            resolve(tests[idx]);
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyPress);
+      drawMenu();
+    });
   }
 
   run() {
