@@ -6,59 +6,73 @@
     <title>FPS Tester</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: Arial, sans-serif; }
-        #gameCanvas { display: block; width: 100%; height: 100%; }
-        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; font-size: 24px; text-shadow: 0 0 10px #0f0; z-index: 1000; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: monospace; }
+        #gameCanvas { display: block; background: #000; }
+        #debug { position: fixed; top: 10px; left: 10px; color: #0f0; font-size: 14px; z-index: 2000; text-shadow: 0 0 5px #0f0; }
     </style>
 </head>
 <body>
-    <div class="loading">Loading FPS Tester - All 17 Tests...</div>
+    <div id="debug">Loading...</div>
     <canvas id="gameCanvas" width="1400" height="900"></canvas>
-    <script src="fps_tester.js"></script>
     <script>
+        // Debug logging
+        window.debugLog = function(msg) {
+            const debug = document.getElementById('debug');
+            const timestamp = new Date().toLocaleTimeString();
+            if (debug) {
+                debug.textContent = `[${timestamp}] ${msg}`;
+                console.log(msg);
+            }
+        };
+        
+        window.debugLog('Script starting...');
+    </script>
+    <script src="fps_tester.js" onload="window.debugLog('fps_tester.js loaded')" onerror="window.debugLog('ERROR: fps_tester.js failed to load')"></script>
+    <script>
+        window.debugLog('Initialization script loaded');
+        
         document.addEventListener('DOMContentLoaded', () => {
-            const loadingScreen = document.querySelector('.loading');
+            window.debugLog('DOMContentLoaded fired');
             
             setTimeout(() => {
                 try {
+                    window.debugLog('Checking FPSTesterApp...');
+                    
                     if (typeof FPSTesterApp === 'undefined') {
-                        console.error('FPSTesterApp not found');
-                        if (loadingScreen) loadingScreen.textContent = 'Error: FPSTesterApp not loaded';
+                        window.debugLog('ERROR: FPSTesterApp not defined');
                         return;
                     }
                     
-                    if (loadingScreen) loadingScreen.remove();
+                    window.debugLog('FPSTesterApp found, creating instance...');
                     
                     const canvas = document.getElementById('gameCanvas');
-                    if (!canvas) {
-                        console.error('Canvas not found');
-                        return;
-                    }
-                    
                     const ctx = canvas.getContext('2d');
-                    if (!ctx) {
-                        console.error('Cannot get canvas context');
-                        return;
-                    }
                     
-                    // Scale canvas for display
-                    const scaleX = window.innerWidth / 1400;
-                    const scaleY = window.innerHeight / 900;
-                    const scale = Math.min(scaleX, scaleY, 1);
+                    // Fill canvas with dark gray to verify context works
+                    ctx.fillStyle = '#111111';
+                    ctx.fillRect(0, 0, 1400, 900);
+                    ctx.fillStyle = '#0f0';
+                    ctx.font = '20px monospace';
+                    ctx.fillText('Canvas working...', 50, 50);
                     
-                    canvas.style.width = (1400 * scale) + 'px';
-                    canvas.style.height = (900 * scale) + 'px';
-                    canvas.style.position = 'absolute';
-                    canvas.style.left = ((window.innerWidth - 1400 * scale) / 2) + 'px';
-                    canvas.style.top = ((window.innerHeight - 900 * scale) / 2) + 'px';
+                    window.debugLog('Canvas verified, starting app...');
                     
                     const app = new FPSTesterApp('gameCanvas');
+                    
+                    window.debugLog('FPSTesterApp instance created, calling run()...');
+                    
                     app.run();
+                    
+                    // Remove debug after 3 seconds if successful
+                    setTimeout(() => {
+                        const debug = document.getElementById('debug');
+                        if (debug) debug.style.display = 'none';
+                    }, 3000);
+                    
                 } catch (err) {
-                    console.error('Initialization error:', err);
-                    if (loadingScreen) loadingScreen.textContent = 'Error: ' + err.message;
+                    window.debugLog(`ERROR: ${err.message} at ${err.stack.split('\\n')[1]}`);
                 }
-            }, 100);
+            }, 200);
         });
     </script>
 </body>
