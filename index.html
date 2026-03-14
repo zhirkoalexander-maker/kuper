@@ -16,27 +16,49 @@
     <canvas id="gameCanvas" width="1400" height="900"></canvas>
     <script src="fps_tester.js"></script>
     <script>
-        window.addEventListener('load', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const loadingScreen = document.querySelector('.loading');
-            if (loadingScreen) loadingScreen.remove();
             
-            const canvas = document.getElementById('gameCanvas');
-            const scaleX = window.innerWidth / 1400;
-            const scaleY = window.innerHeight / 900;
-            const scale = Math.min(scaleX, scaleY, 1);
-            
-            canvas.style.width = (1400 * scale) + 'px';
-            canvas.style.height = (900 * scale) + 'px';
-            canvas.style.position = 'absolute';
-            canvas.style.left = ((window.innerWidth - 1400 * scale) / 2) + 'px';
-            canvas.style.top = ((window.innerHeight - 900 * scale) / 2) + 'px';
-            
-            if (typeof FPSTesterApp !== 'undefined') {
-                const app = new FPSTesterApp('gameCanvas');
-                app.run();
-            } else {
-                console.error('FPSTesterApp not loaded');
-            }
+            setTimeout(() => {
+                try {
+                    if (typeof FPSTesterApp === 'undefined') {
+                        console.error('FPSTesterApp not found');
+                        if (loadingScreen) loadingScreen.textContent = 'Error: FPSTesterApp not loaded';
+                        return;
+                    }
+                    
+                    if (loadingScreen) loadingScreen.remove();
+                    
+                    const canvas = document.getElementById('gameCanvas');
+                    if (!canvas) {
+                        console.error('Canvas not found');
+                        return;
+                    }
+                    
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        console.error('Cannot get canvas context');
+                        return;
+                    }
+                    
+                    // Scale canvas for display
+                    const scaleX = window.innerWidth / 1400;
+                    const scaleY = window.innerHeight / 900;
+                    const scale = Math.min(scaleX, scaleY, 1);
+                    
+                    canvas.style.width = (1400 * scale) + 'px';
+                    canvas.style.height = (900 * scale) + 'px';
+                    canvas.style.position = 'absolute';
+                    canvas.style.left = ((window.innerWidth - 1400 * scale) / 2) + 'px';
+                    canvas.style.top = ((window.innerHeight - 900 * scale) / 2) + 'px';
+                    
+                    const app = new FPSTesterApp('gameCanvas');
+                    app.run();
+                } catch (err) {
+                    console.error('Initialization error:', err);
+                    if (loadingScreen) loadingScreen.textContent = 'Error: ' + err.message;
+                }
+            }, 100);
         });
     </script>
 </body>
