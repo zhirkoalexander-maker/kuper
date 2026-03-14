@@ -1,26 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FPS Tester</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; }
-        body { background: #000; font-family: system-ui; color: #fff; display: flex; align-items: center; justify-content: center; }
-        .container { text-align: center; }
-        h1 { font-size: 48px; margin-bottom: 20px; color: #0f0; }
-        p { font-size: 18px; color: #666; margin-bottom: 30px; }
-        a { display: inline-block; background: #0f0; color: #000; padding: 15px 40px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px; cursor: pointer; }
-        a:hover { background: #0a0; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: Arial, sans-serif; }
+        #gameCanvas { display: block; width: 100%; height: 100%; }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; font-size: 24px; text-shadow: 0 0 10px #0f0; z-index: 1000; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>FPS TESTER</h1>
-        <p>Test your computer's performance</p>
-        <a href="browser-tester.html?v=bf7d7c8">Start Testing</a>
-        <a href="https://github.com/zhirkoalexander-maker/kuper">GitHub</a>
-    </div>
+    <div class="loading">Loading FPS Tester - All 17 Tests...</div>
+    <canvas id="gameCanvas" width="1400" height="900"></canvas>
+    <script src="fps_tester.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            const loadingScreen = document.querySelector('.loading');
+            if (loadingScreen) loadingScreen.remove();
+            
+            const canvas = document.getElementById('gameCanvas');
+            const scaleX = window.innerWidth / 1400;
+            const scaleY = window.innerHeight / 900;
+            const scale = Math.min(scaleX, scaleY, 1);
+            
+            canvas.style.width = (1400 * scale) + 'px';
+            canvas.style.height = (900 * scale) + 'px';
+            canvas.style.position = 'absolute';
+            canvas.style.left = ((window.innerWidth - 1400 * scale) / 2) + 'px';
+            canvas.style.top = ((window.innerHeight - 900 * scale) / 2) + 'px';
+            
+            if (typeof FPSTesterApp !== 'undefined') {
+                const app = new FPSTesterApp('gameCanvas');
+                app.run();
+            } else {
+                console.error('FPSTesterApp not loaded');
+            }
+        });
+    </script>
 </body>
 </html>
