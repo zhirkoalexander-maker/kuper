@@ -13,10 +13,11 @@
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
-    <div id="status">🔄 Initializing...</div>
+    <div id="status">🔄 Loading fps_tester.js...</div>
 
+    <script src="fps_tester.js" onload="initApp()" onerror="statusMsg('✗ Script failed to load')"></script>
     <script>
-        // Setup canvas to fill window
+        // Setup canvas
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
@@ -27,57 +28,56 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
         
-        // Draw test pattern
+        function statusMsg(msg) {
+            document.getElementById('status').textContent = msg;
+            console.log(msg);
+        }
+        
         function drawTestPattern() {
             ctx.fillStyle = '#111111';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
             ctx.strokeStyle = '#0f0';
             ctx.lineWidth = 2;
             ctx.strokeRect(50, 50, 200, 100);
-            
             ctx.fillStyle = '#0f0';
             ctx.font = '20px monospace';
             ctx.fillText('Canvas Ready', 100, 100);
         }
         
         drawTestPattern();
-        document.getElementById('status').textContent = '✓ Canvas initialized';
+        statusMsg('✓ Canvas initialized, loading script...');
         
-        setTimeout(() => {
-            try {
-                // Try to load FPSTesterApp
-                if (typeof FPSTesterApp === 'undefined') {
-                    document.getElementById('status').textContent = '⚠ FPSTesterApp not found - loading script...';
-                    return;
-                }
-                
-                document.getElementById('status').textContent = '✓ FPSTesterApp loaded, initializing...';
-                
-                // Create app with window size canvas
-                const app = new FPSTesterApp('gameCanvas');
-                
-                document.getElementById('status').textContent = '✓ Starting app...';
-                
-                app.run().catch(e => {
-                    document.getElementById('status').textContent = '✗ Error: ' + e.message;
-                    console.error(e);
-                });
-                
-                // Hide status bar after 2s if no error
-                setTimeout(() => {
-                    const status = document.getElementById('status');
-                    if (status.textContent.startsWith('✓')) {
-                        status.style.display = 'none';
+        function initApp() {
+            statusMsg('⏳ Initializing app...');
+            
+            setTimeout(() => {
+                try {
+                    if (typeof FPSTesterApp === 'undefined') {
+                        statusMsg('✗ FPSTesterApp not found - script may not have loaded');
+                        console.error('Available globals:', Object.keys(window).filter(k => k.includes('FPS') || k.includes('App')));
+                        return;
                     }
-                }, 2000);
-                
-            } catch (e) {
-                document.getElementById('status').textContent = '✗ ' + e.message;
-                console.error(e);
-            }
-        }, 500);
+                    
+                    statusMsg('✓ FPSTesterApp found, starting...');
+                    const app = new FPSTesterApp('gameCanvas');
+                    
+                    app.run().catch(e => {
+                        statusMsg('✗ Runtime error: ' + e.message);
+                        console.error(e);
+                    });
+                    
+                    setTimeout(() => {
+                        if (!document.getElementById('status').textContent.startsWith('✗')) {
+                            document.getElementById('status').style.display = 'none';
+                        }
+                    }, 2000);
+                    
+                } catch (e) {
+                    statusMsg('✗ Error: ' + e.message);
+                    console.error(e);
+                }
+            }, 100);
+        }
     </script>
-    <script src="fps_tester.js"></script>
 </body>
 </html>
