@@ -1474,17 +1474,6 @@ class FPSTesterApp {
 // EXPORT FOR HTML
 // ==========================
 
-if (typeof window !== 'undefined') {
-  window.FPSTesterApp = FPSTesterApp;
-  window.GameMode = GameMode;
-  window.ParticleStorm = ParticleStorm;
-  window.PolygonRush = PolygonRush;
-  window.MatrixRain = MatrixRain;
-  window.InteractiveDraw = InteractiveDraw;
-  window.CPUTest = CPUTest;
-  window.RAMTest = RAMTest;
-}
-
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     FPSTesterApp,
