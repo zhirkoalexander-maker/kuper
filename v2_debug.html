@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>V2 Script Load Debug</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; white-space: pre; }
+        #log { display: block; }
+    </style>
+</head>
+<body>
+    <pre id="log"></pre>
+    <script>
+        const log = msg => {
+            const el = document.getElementById('log');
+            el.textContent += msg + '\n';
+            console.log(msg);
+        };
+        
+        log('[1/5] Before script tag');
+        log('typeof FPSTesterApp: ' + typeof window.FPSTesterApp);
+    </script>
+    
+    <script src="fps_tester_v2.js" onerror="console.error('SCRIPT LOAD ERROR')"></script>
+    
+    <script>
+        log('[2/5] After script tag (sync)');
+        log('typeof FPSTesterApp: ' + typeof window.FPSTesterApp);
+        log('typeof GameMode: ' + typeof window.GameMode);
+    </script>
+    
+    <script>
+        setTimeout(() => {
+            log('[3/5] After 100ms timeout');
+            log('typeof FPSTesterApp: ' + typeof window.FPSTesterApp);
+            
+            if (typeof window.FPSTesterApp === 'undefine') {
+                log('✗ Still undefined!');
+                log('Checking window keys...');
+                const keys = Object.keys(window).filter(k => /^[A-Z]/.test(k) && !k.startsWith('webkit'));
+                log('Capitalized keys (' + keys.length + '): ' + keys.slice(0, 20).join(', '));
+            } else {
+                log('✓ FPSTesterApp found!!!');
+            }
+        }, 100);
+    </script>
+</body>
+</html>
