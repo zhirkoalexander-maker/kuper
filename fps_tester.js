@@ -833,7 +833,7 @@ async function showWelcomeScreen(canvas, ctx) {
 
     // Handle keyboard
     const handleKeyPress = (e) => {
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
         e.preventDefault();
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
@@ -946,7 +946,7 @@ async function showMainMenu(canvas, ctx) {
       );
       drawCenteredText(
         ctx,
-        'Or press 1/2/3 | ESC to exit',
+        'Or press 1/2/3 | ESC or E to exit',
         WINDOW_HEIGHT - 60,
         COLORS.WHITE,
         28
@@ -977,7 +977,7 @@ async function showMainMenu(canvas, ctx) {
         } else {
           resolve('settings');
         }
-      } else if (e.code === 'Escape') {
+      } else if (e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
         resolve(null);
@@ -1071,7 +1071,7 @@ async function showResults(canvas, ctx, gameMode) {
       // Hint
       drawCenteredText(
         ctx,
-        'Press SPACE to return | ↑ ↓ to scroll',
+        'Press SPACE or ESC or E to return | ↑ ↓ to scroll',
         WINDOW_HEIGHT - 50,
         COLORS.WHITE,
         28
@@ -1083,7 +1083,7 @@ async function showResults(canvas, ctx, gameMode) {
     }
 
     const handleKeyPress = (e) => {
-      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
         e.preventDefault();
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
