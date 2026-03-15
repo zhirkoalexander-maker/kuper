@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Script Load Debug</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        pre { background: #111; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Script Load Debug</h1>
+    <pre id="log"></pre>
+    
+    <script>
+        const log = document.getElementById('log');
+        
+        function render() {
+            log.textContent += '\n';
+        }
+        
+        log.textContent = '[1] Before script load\n';
+        log.textContent += 'typeof FPSTesterApp: ' + typeof FPSTesterApp + '\n';
+    </script>
+    
+    <script src="fps_tester_v2.js"></script>
+    
+    <script>
+        log.textContent += '\n[2] After script load (synchronous)\n';
+        log.textContent += 'typeof FPSTesterApp: ' + typeof FPSTesterApp + '\n';
+        
+        if (typeof FPSTesterApp === 'function') {
+            log.textContent += '✓ SUCCESS: FPSTesterApp is available\n';
+            log.textContent += 'Can create instance: ';
+            try {
+                const app = new FPSTesterApp('gameCanvas');
+                log.textContent += '✓ YES\n';
+            } catch (e) {
+                log.textContent += '✗ ' + e.message + '\n';
+            }
+        } else {
+            log.textContent += '✗ FAIL: FPSTesterApp is ' + typeof FPSTesterApp + '\n';
+            log.textContent += '\nWindow has these classes:\n';
+            const classes = Object.keys(window)
+                .filter(k => k[0] === k[0].toUpperCase() && !k.startsWith('webkit'))
+                .slice(0, 30)
+                .join('\n');
+            log.textContent += classes;
+        }
+    </script>
+</body>
+</html>
