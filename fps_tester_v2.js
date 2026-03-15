@@ -1173,6 +1173,10 @@ class FPSTesterApp {
 // EXPORT FOR HTML
 // ==========================
 
+if (typeof window !== 'undefined') {
+  window.FPSTesterApp = FPSTesterApp;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     FPSTesterApp,
