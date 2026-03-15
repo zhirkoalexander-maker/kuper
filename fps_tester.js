@@ -832,16 +832,30 @@ async function showWelcomeScreen(canvas, ctx) {
     }
 
     // Handle keyboard
+    canvas.focus();
     const handleKeyPress = (e) => {
-      if (e.code === 'Space' || e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
+      // Check ESC/E FIRST
+      if (e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        e.stopPropagation();
+        animating = false;
+        document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
+        resolve();
+      } else if (e.code === 'Space') {
         e.preventDefault();
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
         resolve();
       }
     };
 
     document.addEventListener('keydown', handleKeyPress);
+    document.body.addEventListener('keydown', handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress);
     drawWelcome();
   });
 }
@@ -957,8 +971,18 @@ async function showMainMenu(canvas, ctx) {
       }
     }
 
+    canvas.focus();
     const handleKeyPress = (e) => {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+      // Check ESC/E FIRST
+      if (e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        e.stopPropagation();
+        animating = false;
+        document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
+        resolve(null);
+      } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         highlight = (highlight - 1 + 3) % 3;
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         highlight = (highlight + 1) % 3;
@@ -970,6 +994,8 @@ async function showMainMenu(canvas, ctx) {
         e.preventDefault();
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
         if (highlight === 0) {
           resolve('fps');
         } else if (highlight === 1) {
@@ -977,26 +1003,30 @@ async function showMainMenu(canvas, ctx) {
         } else {
           resolve('settings');
         }
-      } else if (e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
-        animating = false;
-        document.removeEventListener('keydown', handleKeyPress);
-        resolve(null);
       } else if (e.key === '1') {
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
         resolve('fps');
       } else if (e.key === '2') {
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
         resolve('system');
       } else if (e.key === '3') {
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
         resolve('settings');
       }
     };
 
     document.addEventListener('keydown', handleKeyPress);
+    document.body.addEventListener('keydown', handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress);
     drawMenu();
   });
 }
@@ -1082,11 +1112,23 @@ async function showResults(canvas, ctx, gameMode) {
       }
     }
 
+    canvas.focus();
     const handleKeyPress = (e) => {
-      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
+      // Check ESC/E FIRST
+      if (e.code === 'Escape' || e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        e.stopPropagation();
+        animating = false;
+        document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
+        resolve();
+      } else if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
+        document.body.removeEventListener('keydown', handleKeyPress);
+        window.removeEventListener('keydown', handleKeyPress);
         resolve();
       } else if (e.code === 'ArrowUp') {
         scroll_offset = Math.min(0, scroll_offset + 30);
@@ -1096,6 +1138,8 @@ async function showResults(canvas, ctx, gameMode) {
     };
 
     document.addEventListener('keydown', handleKeyPress);
+    document.body.addEventListener('keydown', handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress);
     drawResults();
   });
 }
