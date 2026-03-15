@@ -60,7 +60,7 @@
                 const app = new FPSTesterApp('gameCanvas');
                 
                 statusMsg('✓ Running app...');
-                app.run();
+                app.start();
                 
                 setTimeout(() => {
                     if (!document.getElementById('status').textContent.startsWith('✗')) {

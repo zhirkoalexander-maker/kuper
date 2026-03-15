@@ -1468,17 +1468,12 @@ class FPSTesterApp {
       // TODO: Run game mode and show results
     }
   }
-
-  run() {
-    this.start().catch(err => console.error('Game error:', err));
-  }
 }
 
 // ==========================
 // EXPORT FOR HTML
 // ==========================
 
-// Browser global export
 if (typeof window !== 'undefined') {
   window.FPSTesterApp = FPSTesterApp;
   window.GameMode = GameMode;
