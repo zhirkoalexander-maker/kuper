@@ -1468,6 +1468,10 @@ class FPSTesterApp {
       // TODO: Run game mode and show results
     }
   }
+
+  run() {
+    this.start().catch(err => console.error('Game error:', err));
+  }
 }
 
 // ==========================
