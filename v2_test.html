@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>V2 Minimal Test</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; line-height: 1.5; }
+        #result { font-size: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>FPS Tester V2 - Minimal Test</h2>
+    <div id="result">Testing...</div>
+    
+    <script src="fps_tester_v2.js"></script>
+    <script>
+        setTimeout(() => {
+            const result = document.getElementById('result');
+            if (typeof FPSTesterApp === 'function') {
+                result.textContent = '✓ SUCCESS - FPSTesterApp is available as a function';
+                result.style.color = '#0f0';
+                
+                // Try to create an instance
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'testCanvas';
+                    document.body.appendChild(canvas);
+                    
+                    const app = new FPSTesterApp('testCanvas');
+                    result.textContent += '\n✓ Instance created successfully';
+                } catch (e) {
+                    result.textContent += '\n✗ Error creating instance: ' + e.message;
+                    result.style.color = '#f00';
+                }
+            } else {
+                result.textContent = '✗ FAIL - FPSTesterApp is ' + typeof FPSTesterApp;
+                result.style.color = '#f00';
+            }
+        }, 100);
+    </script>
+</body>
+</html>
