@@ -226,6 +226,10 @@ class GameMode {
     this.fps_values_maxlen = 300;
     this.fps_display_timer = 0;
     this.current_fps_display = 0;
+    this.test_completed = false;
+    this.test_timer = 30 * 1000; // 30 seconds in milliseconds
+    this.test_remaining_time = this.test_timer;
+    this.parent = null;
   }
 
   update(dt, keys, mouse) {
@@ -234,6 +238,15 @@ class GameMode {
 
   draw(ctx) {
     // Override in subclasses
+  }
+
+  updateTestTimer(dt) {
+    this.test_remaining_time -= dt * 1000;
+    if (this.test_remaining_time <= 0) {
+      this.test_remaining_time = 0;
+      this.test_completed = true;
+    }
+    return Math.max(0, this.test_remaining_time / 1000);
   }
 
   getFPSDisplay(raw_fps, dt) {
@@ -262,6 +275,75 @@ class GameMode {
     const max = Math.max(...this.fps_values);
 
     return avg, min, max;
+  }
+
+  run(canvas, ctx) {
+    return new Promise((resolve) => {
+      let last_frame_time = performance.now();
+      let is_running = true;
+
+      const gameLoop = (current_time) => {
+        const dt = (current_time - last_frame_time) / 1000.0;
+        last_frame_time = current_time;
+
+        // Clamp dt to prevent large jumps
+        const safe_dt = Math.min(dt, 0.05);
+
+        // Update
+        const remaining_time = this.updateTestTimer(safe_dt);
+        
+        // Get keys and mouse from parent (FPSTesterApp)
+        const keys = this.parent ? this.parent.keys : {};
+        const mouse = this.parent ? this.parent.mouse : { x: 0, y: 0, pressed: false, clicked: false };
+        
+        this.update(safe_dt, keys, mouse);
+
+        // Clear canvas
+        ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+        ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        // Draw game
+        this.draw(ctx);
+
+        // Draw HUD
+        drawText(ctx, `${this.name}`, 50, 50, COLORS.CYAN, 48);
+        drawText(ctx, `Time: ${Math.ceil(remaining_time)}s`, 50, 100, COLORS.WHITE, 32);
+
+        const fps_display = this.getFPSDisplay(1 / safe_dt, safe_dt);
+        drawText(ctx, `FPS: ${fps_display}`, WINDOW_WIDTH - 250, 50, COLORS.GREEN, 32);
+
+        // Draw mode hints
+        const hint = remaining_time > 0 ? 'Press E to exit test' : 'Test completed!';
+        drawCenteredText(ctx, hint, WINDOW_HEIGHT - 50, COLORS.WHITE, 28);
+
+        // Reset mouse clicked flag
+        if (mouse) mouse.clicked = false;
+
+        // Check if test is complete
+        if (this.test_completed && is_running) {
+          is_running = false;
+          document.removeEventListener('keydown', handleKeyDown);
+          resolve();
+          return;
+        }
+
+        if (is_running) {
+          requestAnimationFrame(gameLoop);
+        }
+      };
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'e' || e.key === 'E') {
+          is_running = false;
+          document.removeEventListener('keydown', handleKeyDown);
+          this.test_completed = true;
+          resolve();
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+      requestAnimationFrame(gameLoop);
+    });
   }
 }
 
@@ -1164,8 +1246,151 @@ class FPSTesterApp {
         continue;
       }
 
-      // TODO: Run game mode and show results
+      // Run game mode and show results
+      let gameMode = null;
+      
+      if (category === 'fps') {
+        const testName = await this.selectFPSTest();
+        if (!testName) continue;
+        gameMode = this.createFPSTestInstance(testName);
+      } else if (category === 'system') {
+        const testName = await this.selectSystemTest();
+        if (!testName) continue;
+        gameMode = this.createSystemTestInstance(testName);
+      }
+      
+      if (gameMode) {
+        // Set parent reference for input handling
+        gameMode.parent = this;
+        
+        // Run the game mode
+        await gameMode.run(this.canvas, this.ctx);
+        
+        // Show results
+        await showResults(this.canvas, this.ctx, gameMode);
+      }
     }
+  }
+
+  createFPSTestInstance(testName) {
+    switch (testName) {
+      case 'ParticleStorm': return new ParticleStorm();
+      case 'PolygonRush': return new PolygonRush();
+      case 'MatrixRain': return new MatrixRain();
+      case 'InteractiveDraw': return new InteractiveDraw();
+      default: return null;
+    }
+  }
+
+  createSystemTestInstance(testName) {
+    switch (testName) {
+      case 'CPUTest': return new CPUTest();
+      case 'RAMTest': return new RAMTest();
+      default: return null;
+    }
+  }
+
+  async selectFPSTest() {
+    const tests = ['ParticleStorm', 'PolygonRush', 'MatrixRain', 'InteractiveDraw'];
+    return await this.selectTest('FPS Tests', tests);
+  }
+
+  async selectSystemTest() {
+    const tests = ['CPUTest', 'RAMTest'];
+    return await this.selectTest('System Tests', tests);
+  }
+
+  async selectTest(title, tests) {
+    return new Promise((resolve) => {
+      let highlight = 0;
+      let animating = true;
+
+      const drawMenu = () => {
+        // Clean background
+        this.ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+        this.ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        // Title
+        drawCenteredText(this.ctx, title, 100, COLORS.WHITE, 70);
+
+        // Subtitle
+        drawCenteredText(this.ctx, 'Choose a test', 160, [128, 128, 128], 28);
+
+        // Draw test options
+        const startY = 240;
+        const spacing = 130;
+
+        const colors = [COLORS.CYAN, COLORS.RED, COLORS.GREEN, COLORS.YELLOW];
+
+        for (let i = 0; i < tests.length; i++) {
+          const isSelected = i === highlight;
+          const y = startY + i * spacing;
+          const color = colors[i % colors.length];
+
+          // Card background
+          if (isSelected) {
+            this.ctx.fillStyle = rgbToCSS(color);
+            this.ctx.globalAlpha = 0.1;
+            this.ctx.fillRect(150, y, WINDOW_WIDTH - 300, 100);
+            this.ctx.globalAlpha = 1.0;
+          }
+
+          // Card border
+          this.ctx.strokeStyle = rgbToCSS(isSelected ? color : [100, 100, 100]);
+          this.ctx.lineWidth = isSelected ? 5 : 2;
+          this.ctx.strokeRect(150, y, WINDOW_WIDTH - 300, 100);
+
+          // Test name
+          drawCenteredText(
+            this.ctx,
+            `${i + 1}. ${tests[i]}`,
+            y + 60,
+            isSelected ? color : [204, 204, 204],
+            isSelected ? 50 : 40
+          );
+        }
+
+        // Instructions
+        drawCenteredText(
+          this.ctx,
+          'Use Arrow Keys or 1-' + tests.length + ' • ENTER to start • E to back',
+          WINDOW_HEIGHT - 80,
+          [100, 100, 100],
+          20
+        );
+
+        if (animating) {
+          requestAnimationFrame(drawMenu);
+        }
+      };
+
+      const handleKeyPress = (e) => {
+        if (e.code === 'ArrowUp') {
+          highlight = (highlight - 1 + tests.length) % tests.length;
+        } else if (e.code === 'ArrowDown') {
+          highlight = (highlight + 1) % tests.length;
+        } else if (e.code === 'Enter' || e.code === 'Space') {
+          e.preventDefault();
+          animating = false;
+          document.removeEventListener('keydown', handleKeyPress);
+          resolve(tests[highlight]);
+        } else if (e.key === 'e' || e.key === 'E') {
+          animating = false;
+          document.removeEventListener('keydown', handleKeyPress);
+          resolve(null);
+        } else if (/^[1-9]$/.test(e.key)) {
+          const idx = parseInt(e.key) - 1;
+          if (idx < tests.length) {
+            animating = false;
+            document.removeEventListener('keydown', handleKeyPress);
+            resolve(tests[idx]);
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyPress);
+      drawMenu();
+    });
   }
 }
 
