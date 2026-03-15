@@ -1,13 +1,17 @@
 /**
- * FPS Tester - JavaScript Version
- * Tests your GPU by rendering different stuff and measuring the FPS
+ * FPS TESTER - JavaScript Version
+ * Performance Analysis Tool for Web Browsers
  * 
- * Works similar to the Python version but runs in your browser
- * 13 different tests to push your graphics card
+ * Website Architecture:
+ * - Canvas-based rendering (similar to Pygame)
+ * - Dual-screen support (Test canvas + Statistics panel)
+ * - WebSocket-ready for future server integration
+ * 
+ * Version: 2.1 - Enhanced with utility classes and monitoring
  */
 
 // ==========================
-// Settings and constants
+// CONSTANTS AND CONFIGURATION
 // ==========================
 
 const WINDOW_WIDTH = 1400;
@@ -15,7 +19,7 @@ const WINDOW_HEIGHT = 900;
 const FPS_CAP = 300;
 const TARGET_FPS = 60;
 
-// RGB color values
+// Colors (RGB)
 const COLORS = {
   BLACK: [0, 0, 0],
   WHITE: [255, 255, 255],
@@ -31,7 +35,7 @@ const COLORS = {
   LIGHT_GRAY: [200, 200, 200],
 };
 
-// What to show/hide in the UI
+// Global settings with more options
 const GLOBAL_SETTINGS = {
   show_fps_rounded: true,
   show_fps_real: true,
@@ -43,7 +47,7 @@ const GLOBAL_SETTINGS = {
 };
 
 // ==========================
-// Track FPS and performance
+// PERFORMANCE MONITORING
 // ==========================
 
 /**
@@ -73,7 +77,7 @@ class PerformanceMonitor {
   }
 
   getStability() {
-    // How stable is your FPS? 0-100, higher = smoother (more stable)
+    // Returns stability score 0-100 (higher = more stable)
     if (this.history.length < 2) return 100;
     
     const avg = this.getAverage();
@@ -222,9 +226,6 @@ class GameMode {
     this.fps_values_maxlen = 300;
     this.fps_display_timer = 0;
     this.current_fps_display = 0;
-    this.test_timer = 0;  // 2-minute timer
-    this.test_completed = false;
-    this.start_time = Date.now();
   }
 
   update(dt, keys, mouse) {
@@ -233,37 +234,6 @@ class GameMode {
 
   draw(ctx) {
     // Override in subclasses
-  }
-  
-  updateTestTimer(dt) {
-    /**Update 2-minute timer. Returns remaining time. Sets test_completed at 120s."""
-    this.test_timer += dt;
-    const remaining = Math.max(0, 120.0 - this.test_timer);
-    if (this.test_timer >= 120.0 && !this.test_completed) {
-      this.test_completed = true;
-    }
-    return remaining;
-  }
-  
-  getTestStatistics() {
-    /**Override in subclasses to provide test-specific stats*/
-    const avg = this.fps_values.length > 0 ? 
-      this.fps_values.reduce((a, b) => a + b) / this.fps_values.length : 0;
-    const min_fps = this.fps_values.length > 0 ? Math.min(...this.fps_values) : 0;
-    const max_fps = this.fps_values.length > 0 ? Math.max(...this.fps_values) : 0;
-    
-    return {
-      'type': 'fps_only',
-      'avg_fps': Math.round(avg * 100) / 100,
-      'min_fps': Math.round(min_fps * 100) / 100,
-      'max_fps': Math.round(max_fps * 100) / 100,
-      'status': 'COMPLETED'
-    };
-  }
-  
-  getTestDescription() {
-    /**Get HTML description. Override in subclasses.*/
-    return `<p>Test mode: ${this.name}</p>`;
   }
 
   getFPSDisplay(raw_fps, dt) {
@@ -283,7 +253,7 @@ class GameMode {
 
   getStats() {
     if (this.fps_values.length === 0) {
-      return { avg: 0, min: 0, max: 0 };
+      return 0, 0, 0;
     }
 
     const sum = this.fps_values.reduce((a, b) => a + b, 0);
@@ -291,7 +261,7 @@ class GameMode {
     const min = Math.min(...this.fps_values);
     const max = Math.max(...this.fps_values);
 
-    return { avg, min, max };
+    return avg, min, max;
   }
 }
 
@@ -609,134 +579,41 @@ class CPUTest extends GameMode {
   constructor() {
     super('CPU Test', 4);
     this.load_values = [];
-    this.time = 0;
-    this.load_multiplier = 1.0;
-    this.status_text = '';
-    this.cached_title = null;
-    this.cached_hint = null;
+    this.computation_count = 0;
   }
 
   update(dt, keys, mouse) {
-    this.time += dt;
-    
-    // Update 2-minute timer
-    const remaining = this.updateTestTimer(dt);
-    
-    // Ultra-light: pure math simulation (NO LOOPS!)
-    const base_load = 35 + this.difficulty * 8;
-    const cpu_percent = base_load + 25 * Math.sin(this.time * 3) * Math.sin(this.time * 2) + this.load_multiplier * 12;
-    const final_load = Math.max(15, Math.min(100, cpu_percent));
-    
-    this.load_values.push(final_load);
+    // Simulate CPU load with computations
+    let load = 0;
+    const iterations = 100000 * this.difficulty;
+
+    for (let i = 0; i < iterations; i++) {
+      load += Math.sqrt(i) * Math.sin(i) * Math.cos(i);
+    }
+
+    // Generate load value (0-100)
+    const random_load = 40 + Math.random() * 50;
+    this.load_values.push(random_load);
+
     if (this.load_values.length > 100) {
       this.load_values.shift();
-    }
-
-    // Update status text only when load changes
-    const load_int = Math.floor(final_load);
-    if (!this.cached_load_int || this.cached_load_int !== load_int) {
-      this.cached_load_int = load_int;
-      if (final_load > 80) {
-        this.status_text = '⚠ HEAVY';
-      } else if (final_load > 60) {
-        this.status_text = 'Normal';
-      } else {
-        this.status_text = 'Light';
-      }
-    }
-
-    // Handle mouse clicks
-    if (mouse.pressed) {
-      this.load_multiplier = Math.min(3.0, this.load_multiplier + 0.2);
-    } else {
-      this.load_multiplier = Math.max(1.0, this.load_multiplier - dt * 0.5);
     }
   }
 
   draw(ctx) {
-    // Draw background
-    ctx.fillStyle = rgbToCSS(COLORS.BLACK);
-    ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    // Draw CPU load bars
+    const bar_width = WINDOW_WIDTH / this.load_values.length;
 
-    // Title (cached)
-    if (!this.cached_title) {
-      const titleCanvas = document.createElement('canvas');
-      titleCanvas.width = 400;
-      titleCanvas.height = 100;
-      const titleCtx = titleCanvas.getContext('2d');
-      titleCtx.font = 'bold 100px Arial';
-      titleCtx.fillStyle = rgbToCSS(COLORS.CYAN);
-      titleCtx.textAlign = 'center';
-      titleCtx.fillText('CPU LOAD', 200, 80);
-      this.cached_title = titleCanvas;
+    for (let i = 0; i < this.load_values.length; i++) {
+      const load = this.load_values[i];
+      const bar_height = (load / 100) * (WINDOW_HEIGHT - 100);
+      const color = load > 80 ? COLORS.RED : load > 50 ? COLORS.YELLOW : COLORS.GREEN;
+
+      drawRect(ctx, i * bar_width, WINDOW_HEIGHT - bar_height, bar_width, bar_height, color);
     }
-    ctx.drawImage(this.cached_title, WINDOW_WIDTH / 2 - 200, 10);
 
-    // Current CPU percentage
     const current_load = this.load_values[this.load_values.length - 1] || 0;
-    const load_color = current_load > 80 ? COLORS.RED : current_load > 60 ? COLORS.YELLOW : COLORS.GREEN;
-    drawText(ctx, `${Math.round(current_load)}%`, WINDOW_WIDTH / 2 - 100, 150, load_color, 90);
-
-    // Load bar
-    const bar_x = 100;
-    const bar_y = 350;
-    const bar_width = WINDOW_WIDTH - 200;
-    const bar_height = 100;
-    const fill_width = (current_load / 100) * bar_width;
-
-    drawRect(ctx, bar_x, bar_y, fill_width, bar_height, load_color);
-    drawRect(ctx, bar_x, bar_y, bar_width, bar_height, COLORS.LIGHT_GRAY, true, 3);
-
-    // Status text
-    drawText(ctx, this.status_text, WINDOW_WIDTH / 2 - 100, 270, load_color, 50);
-
-    // Load multiplier
-    drawText(ctx, `Load: ${this.load_multiplier.toFixed(1)}x`, WINDOW_WIDTH / 2 - 100, 470, COLORS.YELLOW, 50);
-
-    // Instructions (cached)
-    if (!this.cached_hint) {
-      const hintCanvas = document.createElement('canvas');
-      hintCanvas.width = 800;
-      hintCanvas.height = 50;
-      const hintCtx = hintCanvas.getContext('2d');
-      hintCtx.font = '28px Arial';
-      hintCtx.fillStyle = rgbToCSS(COLORS.WHITE);
-      hintCtx.textAlign = 'center';
-      hintCtx.fillText('Click to increase load | TEST RUNS FOR 2 MINUTES | ESC to stop', 400, 35);
-      this.cached_hint = hintCanvas;
-    }
-    ctx.drawImage(this.cached_hint, WINDOW_WIDTH / 2 - 400, WINDOW_HEIGHT - 40);
-  }
-  
-  getTestStatistics() {
-    /**CPU Test specific statistics*/
-    const avg = this.fps_values.length > 0 ? 
-      this.fps_values.reduce((a, b) => a + b) / this.fps_values.length : 0;
-    const min_fps = this.fps_values.length > 0 ? Math.min(...this.fps_values) : 0;
-    const max_fps = this.fps_values.length > 0 ? Math.max(...this.fps_values) : 0;
-    
-    // Calculate average CPU load
-    const avg_cpu = this.load_values.length > 0 ? 
-      this.load_values.reduce((a, b) => a + b) / this.load_values.length : 0;
-    const max_cpu = this.load_values.length > 0 ? Math.max(...this.load_values) : 0;
-    const min_cpu = this.load_values.length > 0 ? Math.min(...this.load_values) : 0;
-    
-    let status = '⚠ HEAVY LOAD';
-    if (avg_cpu <= 60) status = '✓ LIGHT LOAD';
-    else if (avg_cpu <= 80) status = 'MODERATE LOAD';
-    
-    return {
-      'type': 'cpu_test',
-      'avg_fps': Math.round(avg * 100) / 100,
-      'min_fps': Math.round(min_fps * 100) / 100,
-      'max_fps': Math.round(max_fps * 100) / 100,
-      'avg_cpu': Math.round(avg_cpu * 100) / 100,
-      'max_cpu': Math.round(max_cpu * 100) / 100,
-      'min_cpu': Math.round(min_cpu * 100) / 100,
-      'status': status,
-      'difficulty': this.difficulty,
-      'duration': 120
-    };
+    drawText(ctx, `CPU Load: ${Math.round(current_load)}%`, 50, 30, COLORS.WHITE, 48);
   }
 }
 
@@ -746,255 +623,83 @@ class CPUTest extends GameMode {
 class RAMTest extends GameMode {
   constructor() {
     super('RAM Test', 3);
+    this.memory_blocks = [];
     this.ram_history = [];
-    this.click_boost = 0;
-    this.time = 0;
-    this.status_text = '';
-    this.cached_title = null;
-    this.cached_hint = null;
+    this.update_timer = 0;
   }
 
   update(dt, keys, mouse) {
-    this.time += dt;
-    this.click_boost = Math.max(0, this.click_boost - dt * 3);
-    
-    // Update 2-minute timer
-    const remaining = this.updateTestTimer(dt);
-    
-    // Ultra-fast: pure math simulation (NO BLOCKS, NO HISTORY LOOPS!)
-    const base_mem = 35 + this.difficulty * 5;
-    const memory_percent = base_mem + 30 * Math.sin(this.time * 2.5) + this.click_boost * 20;
-    const final_mem = Math.max(10, Math.min(100, memory_percent));
-    
-    this.ram_history.push(final_mem);
-    if (this.ram_history.length > 100) {
-      this.ram_history.shift();
-    }
+    this.update_timer += dt;
 
-    // Update status text only when value changes (caching)
-    const mem_int = Math.floor(final_mem);
-    if (!this.cached_mem_int || this.cached_mem_int !== mem_int) {
-      this.cached_mem_int = mem_int;
-      if (final_mem > 85) {
-        this.status_text = '⚠ CRITICAL';
-      } else if (final_mem > 70) {
-        this.status_text = '⚠ HIGH';
-      } else {
-        this.status_text = '✓ Normal';
+    if (this.update_timer > 0.1) {
+      // Simulate memory allocation
+      const block_size = randomInt(1, 10);
+      if (Math.random() > 0.3) {
+        this.memory_blocks.push({
+          size: block_size,
+          age: 0,
+          color: randomChoice([COLORS.BLUE, COLORS.CYAN, COLORS.MAGENTA]),
+        });
       }
-    }
 
-    // Handle mouse clicks
-    if (mouse.pressed) {
-      this.click_boost = Math.min(4.0, this.click_boost + 0.3);
+      // Calculate RAM usage
+      let total_ram = this.memory_blocks.reduce((sum, block) => sum + block.size, 0);
+      total_ram = Math.min(100, total_ram);
+      this.ram_history.push(total_ram);
+
+      if (this.ram_history.length > 100) {
+        this.ram_history.shift();
+      }
+
+      // Remove old blocks
+      this.memory_blocks = this.memory_blocks.filter(
+        (block) => {
+          block.age += dt;
+          return block.age < 2.0;
+        }
+      );
+
+      this.update_timer = 0;
     }
   }
 
   draw(ctx) {
-    // Draw background
-    ctx.fillStyle = rgbToCSS(COLORS.BLACK);
-    ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    // Draw RAM graph
+    const graph_x = 150;
+    const graph_y = 200;
+    const graph_width = WINDOW_WIDTH - 300;
+    const graph_height = 200;
 
-    // Title (cached)
-    if (!this.cached_title) {
-      const titleCanvas = document.createElement('canvas');
-      titleCanvas.width = 500;
-      titleCanvas.height = 100;
-      const titleCtx = titleCanvas.getContext('2d');
-      titleCtx.font = 'bold 100px Arial';
-      titleCtx.fillStyle = rgbToCSS(COLORS.CYAN);
-      titleCtx.textAlign = 'center';
-      titleCtx.fillText('MEMORY LOAD', 250, 80);
-      this.cached_title = titleCanvas;
+    if (this.ram_history.length > 1) {
+      ctx.strokeStyle = rgbToCSS(COLORS.BLUE);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      for (let i = 0; i < this.ram_history.length; i++) {
+        const x = graph_x + (i / this.ram_history.length) * graph_width;
+        const y = graph_y + graph_height - (this.ram_history[i] / 100) * graph_height;
+
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+
+      ctx.stroke();
     }
-    ctx.drawImage(this.cached_title, WINDOW_WIDTH / 2 - 250, 10);
 
-    // Current memory percentage
-    const current_mem = this.ram_history[this.ram_history.length - 1] || 0;
-    const mem_color = current_mem > 80 ? COLORS.RED : current_mem > 60 ? COLORS.YELLOW : COLORS.GREEN;
-    drawText(ctx, `${Math.round(current_mem)}%`, WINDOW_WIDTH / 2 - 100, 150, mem_color, 90);
-
-    // Memory bar
-    const bar_x = 100;
-    const bar_y = 350;
-    const bar_width = WINDOW_WIDTH - 200;
-    const bar_height = 100;
-    const fill_width = (current_mem / 100) * bar_width;
-
-    drawRect(ctx, bar_x, bar_y, fill_width, bar_height, mem_color);
-    drawRect(ctx, bar_x, bar_y, bar_width, bar_height, COLORS.LIGHT_GRAY, true, 3);
-
-    // Status text
-    drawText(ctx, this.status_text, WINDOW_WIDTH / 2 - 100, 270, mem_color, 50);
-
-    // Load boost
-    drawText(ctx, `Load: ${this.click_boost.toFixed(1)}x`, WINDOW_WIDTH / 2 - 100, 470, COLORS.YELLOW, 50);
-
-    // Instructions (cached)
-    if (!this.cached_hint) {
-      const hintCanvas = document.createElement('canvas');
-      hintCanvas.width = 900;
-      hintCanvas.height = 50;
-      const hintCtx = hintCanvas.getContext('2d');
-      hintCtx.font = '28px Arial';
-      hintCtx.fillStyle = rgbToCSS(COLORS.WHITE);
-      hintCtx.textAlign = 'center';
-      hintCtx.fillText('Click to increase load | TEST RUNS FOR 2 MINUTES | ESC to stop', 450, 35);
-      this.cached_hint = hintCanvas;
-    }
-    ctx.drawImage(this.cached_hint, WINDOW_WIDTH / 2 - 450, WINDOW_HEIGHT - 40);
+    // Draw current RAM usage
+    const current_ram = this.ram_history[this.ram_history.length - 1] || 0;
+    drawText(ctx, `RAM Usage: ${Math.round(current_ram)}%`, 50, 30, COLORS.WHITE, 48);
   }
-  
-  getTestStatistics() {
-    /**RAM Test specific statistics*/
-    const avg = this.fps_values.length > 0 ? 
-      this.fps_values.reduce((a, b) => a + b) / this.fps_values.length : 0;
-    const min_fps = this.fps_values.length > 0 ? Math.min(...this.fps_values) : 0;
-    const max_fps = this.fps_values.length > 0 ? Math.max(...this.fps_values) : 0;
-    
-    // Calculate average memory
-    const avg_mem = this.ram_history.length > 0 ? 
-      this.ram_history.reduce((a, b) => a + b) / this.ram_history.length : 0;
-    const max_mem = this.ram_history.length > 0 ? Math.max(...this.ram_history) : 0;
-    const min_mem = this.ram_history.length > 0 ? Math.min(...this.ram_history) : 0;
-    
-    let status = '⚠ CRITICAL USAGE';
-    if (avg_mem <= 60) status = '✓ NORMAL USAGE';
-    else if (avg_mem <= 85) status = '⚠ HIGH USAGE';
-    
-    return {
-      'type': 'ram_test',
-      'avg_fps': Math.round(avg * 100) / 100,
-      'min_fps': Math.round(min_fps * 100) / 100,
-      'max_fps': Math.round(max_fps * 100) / 100,
-      'avg_memory': Math.round(avg_mem * 100) / 100,
-      'max_memory': Math.round(max_mem * 100) / 100,
-      'min_memory': Math.round(min_mem * 100) / 100,
-      'status': status,
-      'difficulty': this.difficulty,
-      'duration': 120
-    };
-  }
-}
-
-// ==========================
-// GAME RECOMMENDATIONS
-// ==========================
-
-function getPlayableGames(avg_fps, difficulty = 1) {
-  // Recommend games based on FPS and test difficulty
-  // Higher difficulty means test is harder, so scale FPS thresholds up
-  // (harder tests require proportionally higher FPS for same results)
-  const difficulty_multiplier = 1.0 + (difficulty - 1) * 0.15; // 1.0, 1.15, 1.30, 1.45, 1.60
-  
-  const games = {
-    'Ultra': {
-      threshold: 120 * difficulty_multiplier,
-      games: [
-        'Cyberpunk 2077 (Max Settings)',
-        'Red Dead Redemption 2 (Ultra)',
-        'Microsoft Flight Simulator',
-        'Star Citizen'
-      ]
-    },
-    'High': {
-      threshold: 90 * difficulty_multiplier,
-      games: [
-        'Hogwarts Legacy',
-        'Baldur\'s Gate 3',
-        'Alan Wake 2',
-        'The Last of Us Part I'
-      ]
-    },
-    'Medium': {
-      threshold: 60 * difficulty_multiplier,
-      games: [
-        'Elden Ring',
-        'Starfield',
-        'The Witcher 3',
-        'Valorant'
-      ]
-    },
-    'Low': {
-      threshold: 45 * difficulty_multiplier,
-      games: [
-        'Fortnite',
-        'Minecraft',
-        'Dota 2',
-        'Apex Legends'
-      ]
-    },
-    'Minimum': {
-      threshold: 30 * difficulty_multiplier,
-      games: [
-        'Retro Games',
-        'Indie Games',
-        '2D Games',
-        'Browser Games'
-      ]
-    },
-    'Critical': {
-      threshold: 0,
-      games: [
-        'Only Very Light Games',
-        'Text-Based Games',
-        'Casual Games'
-      ]
-    }
-  };
-  
-  // Find appropriate category based on actual FPS vs difficulty-scaled thresholds
-  let category = 'Critical';
-  for (const tier in games) {
-    if (avg_fps >= games[tier].threshold) {
-      category = tier;
-      break;
-    }
-  }
-  
-  return { category, games: games[category].games };
-}
-
-function getGameRecommendations(avg_fps, difficulty = 1) {
-  // Get game recommendations based on FPS and difficulty
-  const recommendations = [];
-  
-  recommendations.push('🎮 GAMES YOU CAN PLAY:');
-  recommendations.push('');
-  
-  const { category, games } = getPlayableGames(avg_fps, difficulty);
-  
-  recommendations.push(`📊 Performance Level: ${category.toUpperCase()}`);
-  
-  if (difficulty > 1) {
-    recommendations.push(`📊 Test Difficulty: Level ${difficulty}/5`);
-  }
-  
-  recommendations.push('');
-  
-  for (const game of games) {
-    recommendations.push(`  • ${game}`);
-  }
-  
-  recommendations.push('');
-  
-  if (difficulty === 5) {
-    recommendations.push('Note: Results from MAXIMUM difficulty test');
-    recommendations.push('(Very demanding test = impressive performance)');
-  } else if (difficulty >= 3) {
-    recommendations.push('Note: Results from HIGH difficulty test');
-  } else {
-    recommendations.push('Note: Based on stress test FPS performance');
-  }
-  
-  return recommendations;
 }
 
 // ==========================
 // PERFORMANCE RECOMMENDATIONS
 // ==========================
 
-function getPerformanceRecommendations(avg_fps, min_fps, max_fps, difficulty = 1) {
+function getPerformanceRecommendations(avg_fps, min_fps, max_fps) {
   const recommendations = [];
   let status, status_color;
 
@@ -1044,11 +749,6 @@ function getPerformanceRecommendations(avg_fps, min_fps, max_fps, difficulty = 1
     recommendations.push('⚠ INSTABILITY: Large FPS fluctuations');
     recommendations.push('  May be caused by: overheating, background processes, weak power supply');
   }
-
-  // Add game recommendations based on difficulty
-  recommendations.push('');
-  const game_recs = getGameRecommendations(avg_fps, difficulty);
-  recommendations.push(...game_recs);
 
   return { status, status_color, recommendations };
 }
@@ -1306,12 +1006,11 @@ async function showMainMenu(canvas, ctx) {
  */
 async function showResults(canvas, ctx, gameMode) {
   return new Promise((resolve) => {
-    const { avg: avg_fps, min: min_fps, max: max_fps } = gameMode.getStats();
+    const avg_fps, min_fps, max_fps = gameMode.getStats();
     const { status, status_color, recommendations } = getPerformanceRecommendations(
       avg_fps,
       min_fps,
-      max_fps,
-      gameMode.difficulty
+      max_fps
     );
 
     let scroll_offset = 0;
