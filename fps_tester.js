@@ -293,76 +293,7 @@ class GameMode {
 
     return { avg, min, max };
   }
-
-  run(canvas, ctx) {
-    return new Promise((resolve) => {
-      let last_frame_time = performance.now();
-      let is_running = true;
-
-      const gameLoop = (current_time) => {
-        const dt = (current_time - last_frame_time) / 1000.0;
-        last_frame_time = current_time;
-
-        // Clamp dt to prevent large jumps
-        const safe_dt = Math.min(dt, 0.05);
-
-        // Update
-        const remaining_time = this.updateTestTimer(safe_dt);
-        
-        // Use parent's keys and mouse if available
-        const keys = this.parent ? this.parent.keys : {};
-        const mouse = this.parent ? this.parent.mouse : { x: 0, y: 0, pressed: false, clicked: false };
-        
-        this.update(safe_dt, keys, mouse);
-
-        // Clear canvas
-        ctx.fillStyle = rgbToCSS(COLORS.BLACK);
-        ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-        // Draw game
-        this.draw(ctx);
-
-        // Draw HUD
-        drawText(ctx, `${this.name}`, 50, 50, COLORS.CYAN, 48);
-        drawText(ctx, `Time: ${Math.ceil(remaining_time)}s`, 50, 100, COLORS.WHITE, 32);
-
-        const stats = this.getStats();
-        const fps_display = this.getFPSDisplay(1 / safe_dt, safe_dt);
-        drawText(ctx, `FPS: ${fps_display}`, WINDOW_WIDTH - 250, 50, COLORS.GREEN, 32);
-
-        // Draw mode hints
-        const hint = remaining_time > 0 ? 'Press E to exit test' : 'Test completed!';
-        drawCenteredText(ctx, hint, WINDOW_HEIGHT - 50, COLORS.WHITE, 28);
-
-        // Reset mouse clicked flag
-        if (mouse) mouse.clicked = false;
-
-        // Check if test is complete
-        if (this.test_completed && is_running) {
-          is_running = false;
-          document.removeEventListener('keydown', handleKeyDown);
-          resolve();
-          return;
-        }
-
-        if (is_running) {
-          requestAnimationFrame(gameLoop);
-        }
-      };
-
-      const handleKeyDown = (e) => {
-        if (e.key === 'e' || e.key === 'E') {
-          is_running = false;
-          document.removeEventListener('keydown', handleKeyDown);
-          this.test_completed = true;
-          resolve();
-        }
-      };
-
-      document.addEventListener('keydown', handleKeyDown);
-      requestAnimationFrame(gameLoop);
-    });
-  }
+}
 
 // ==========================
 // GAME MODES
@@ -771,7 +702,7 @@ class CPUTest extends GameMode {
       hintCtx.font = '28px Arial';
       hintCtx.fillStyle = rgbToCSS(COLORS.WHITE);
       hintCtx.textAlign = 'center';
-      hintCtx.fillText('Click to increase load | TEST RUNS FOR 2 MINUTES | Press E to exit', 400, 35);
+      hintCtx.fillText('Click to increase load | TEST RUNS FOR 2 MINUTES | ESC to stop', 400, 35);
       this.cached_hint = hintCanvas;
     }
     ctx.drawImage(this.cached_hint, WINDOW_WIDTH / 2 - 400, WINDOW_HEIGHT - 40);
@@ -908,7 +839,7 @@ class RAMTest extends GameMode {
       hintCtx.font = '28px Arial';
       hintCtx.fillStyle = rgbToCSS(COLORS.WHITE);
       hintCtx.textAlign = 'center';
-      hintCtx.fillText('Click to increase load | TEST RUNS FOR 2 MINUTES | Press E to exit', 450, 35);
+      hintCtx.fillText('Click to increase load | TEST RUNS FOR 2 MINUTES | ESC to stop', 450, 35);
       this.cached_hint = hintCanvas;
     }
     ctx.drawImage(this.cached_hint, WINDOW_WIDTH / 2 - 450, WINDOW_HEIGHT - 40);
@@ -1059,66 +990,6 @@ function getGameRecommendations(avg_fps, difficulty = 1) {
   return recommendations;
 }
 
-function getMemoryGameRecommendations(avg_memory, difficulty = 1) {
-  // Get game recommendations based on memory usage
-  const recommendations = [];
-  
-  recommendations.push('🎮 GAMES FOR YOUR MEMORY:');
-  recommendations.push('');
-  
-  let category = 'Light';
-  let games = [];
-  
-  if (avg_memory <= 30) {
-    category = 'Gaming Powerhouse';
-    games = [
-      'Any modern AAA game at max settings',
-      'Cyberpunk 2077, Red Dead 2, Star Citizen',
-      'VR games at high quality'
-    ];
-  } else if (avg_memory <= 50) {
-    category = 'High-End Gaming';
-    games = [
-      'Most AAA games at high settings',
-      'Baldur\'s Gate 3, Alan Wake 2, Starfield',
-      'Competitive games at 1440p'
-    ];
-  } else if (avg_memory <= 70) {
-    category = 'Medium Gaming';
-    games = [
-      'Mid-range AAA titles',
-      'Elden Ring, The Witcher 3',
-      'Indie and browser games'
-    ];
-  } else if (avg_memory <= 85) {
-    category = 'Light Gaming';
-    games = [
-      'Casual and indie games',
-      'Browser games, emulators',
-      'Office and productivity apps'
-    ];
-  } else {
-    category = 'Very Limited';
-    games = [
-      'Web browsing, office work',
-      'Retro games, 2D games',
-      'Text-based applications'
-    ];
-  }
-  
-  recommendations.push(`📊 Memory Category: ${category}`);
-  recommendations.push('');
-  
-  for (const game of games) {
-    recommendations.push(`  • ${game}`);
-  }
-  
-  recommendations.push('');
-  recommendations.push('Note: Based on system memory usage test');
-  
-  return recommendations;
-}
-
 // ==========================
 // PERFORMANCE RECOMMENDATIONS
 // ==========================
@@ -1187,65 +1058,80 @@ function getPerformanceRecommendations(avg_fps, min_fps, max_fps, difficulty = 1
 // ==========================
 
 /**
- * Welcome screen - Clean modern design
+ * Welcome screen with animation
  */
 async function showWelcomeScreen(canvas, ctx) {
   return new Promise((resolve) => {
-    let frame = 0;
+    let alpha_timer = 0;
     let animating = true;
 
     function drawWelcome() {
-      frame++;
+      alpha_timer++;
 
-      // Clean dark background
-      ctx.fillStyle = '#0a0a0a';
+      ctx.fillStyle = rgbToCSS(COLORS.BLACK);
       ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-      // Gradient background (optional accent)
-      const grad = ctx.createLinearGradient(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-      grad.addColorStop(0, 'rgba(20, 20, 30, 0.5)');
-      grad.addColorStop(1, 'rgba(15, 15, 25, 0.5)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-      // Main title
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 120px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('FPS TESTER', WINDOW_WIDTH / 2, 200);
-
-      // Subtitle with clean style
-      ctx.fillStyle = '#888888';
-      ctx.font = '32px sans-serif';
-      ctx.fillText('Performance Analysis Tool', WINDOW_WIDTH / 2, 280);
-
-      // Info section
-      ctx.fillStyle = '#666666';
-      ctx.font = '24px sans-serif';
-      const infoLines = [
-        'Measure your computer\'s gaming performance',
-        'Real-time FPS tracking and statistics',
-        'Game recommendations based on your results',
-      ];
-      
-      let y = 400;
-      for (const line of infoLines) {
-        ctx.fillText(line, WINDOW_WIDTH / 2, y);
-        y += 50;
+      // Draw animated stars
+      for (let i = 0; i < 30; i++) {
+        const x = (i * 47 + alpha_timer * 2) % WINDOW_WIDTH;
+        const y = (i * 31) % WINDOW_HEIGHT;
+        ctx.fillStyle = 'rgb(100, 100, 100)';
+        ctx.fillRect(x, y, 2, 2);
       }
 
-      // Pulsing hint at bottom
-      const pulse = Math.abs(Math.sin(frame * 0.05));
-      const opacity = Math.round(255 * (0.4 + pulse * 0.4));
-      ctx.fillStyle = `rgba(150, 150, 150, ${opacity / 255})`;
-      ctx.font = '28px sans-serif';
-      ctx.fillText('Press SPACE to continue', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80);
+      // Title
+      drawCenteredText(ctx, 'FPS TESTER', 100, COLORS.CYAN, 100);
+
+      // Subtitle
+      drawCenteredText(ctx, 'Performance Analysis Tool', 220, COLORS.YELLOW, 60);
+
+      // Info lines
+      const lines = [
+        '✓ Analyze your computer\'s gaming performance',
+        '✓ Test with interactive game modes',
+        '✓ Monitor CPU, RAM, and Disk I/O',
+        '✓ Get personalized recommendations',
+        '',
+        '🌐 Web version coming soon!',
+        '   Dual-screen architecture for weak PCs:',
+        '   - Test screen + Statistics screen',
+        '   - Automatic restart on crash',
+      ];
+
+      let y_pos = 330;
+      for (const line of lines) {
+        if (line === '') {
+          y_pos += 30;
+          continue;
+        }
+
+        const color = line.startsWith('🌐') || line.startsWith('   ')
+          ? COLORS.MAGENTA
+          : COLORS.GREEN;
+        const fontSize = line.startsWith('   ') ? 28 : 36;
+
+        drawCenteredText(ctx, line, y_pos, color, fontSize);
+        y_pos += 45;
+      }
+
+      // Pulsing hint
+      const pulse = Math.abs(Math.sin(alpha_timer * 0.05));
+      const brightness = Math.round(255 * (0.5 + pulse * 0.5));
+
+      drawCenteredText(
+        ctx,
+        'Press SPACE to continue',
+        WINDOW_HEIGHT - 100,
+        [brightness, brightness, brightness],
+        48
+      );
 
       if (animating) {
         requestAnimationFrame(drawWelcome);
       }
     }
 
+    // Handle keyboard
     const handleKeyPress = (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
@@ -1261,83 +1147,110 @@ async function showWelcomeScreen(canvas, ctx) {
 }
 
 /**
- * Main menu - Clean modern design
+ * Main menu with animated background
  */
 async function showMainMenu(canvas, ctx) {
   return new Promise((resolve) => {
     let highlight = 0;
     let animating = true;
+    let frame = 0;
+
+    // Background particles
+    const particles = [];
+    for (let i = 0; i < 20; i++) {
+      particles.push({
+        x: Math.random() * WINDOW_WIDTH,
+        y: Math.random() * WINDOW_HEIGHT,
+        vx: randomFloat(-0.5, 0.5),
+        vy: randomFloat(-1, 0),
+        size: randomInt(1, 3),
+        color: randomChoice([COLORS.CYAN, COLORS.MAGENTA, COLORS.GREEN]),
+      });
+    }
 
     function drawMenu() {
-      // Clean background
-      ctx.fillStyle = '#0a0a0a';
-      ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+      frame++;
 
-      // Main title
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 80px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('FPS TESTER', WINDOW_WIDTH / 2, 100);
-
-      // Subtitle
-      ctx.fillStyle = '#888888';
-      ctx.font = '28px sans-serif';
-      ctx.fillText('Select test type', WINDOW_WIDTH / 2, 170);
-
-      // Menu options - clean card style
-      const options = [
-        { title: 'FPS Tests', desc: 'Interactive performance tests', color: '#5ddde4' },
-        { title: 'System Tests', desc: 'CPU, RAM, and Disk monitoring', color: '#ff6b6b' },
-        { title: 'Settings', desc: 'Display and options', color: '#51cf66' },
-      ];
-
-      const cardY = 300;
-      const cardSpacing = 280;
-      const cardWidth = 350;
-      const cardHeight = 150;
-
-      for (let i = 0; i < options.length; i++) {
-        const isSelected = i === highlight;
-        const opt = options[i];
-        const x = (WINDOW_WIDTH / 2 - cardWidth / 2) + (i - 1) * cardSpacing;
-
-        // Card background
-        if (isSelected) {
-          ctx.fillStyle = opt.color;
-          ctx.globalAlpha = 0.15;
-          ctx.fillRect(x, cardY, cardWidth, cardHeight);
-          ctx.globalAlpha = 1.0;
+      // Update particles
+      for (const p of particles) {
+        p.y += p.vy;
+        p.x += p.vx;
+        if (p.y < -10) {
+          p.y = WINDOW_HEIGHT + 10;
+          p.x = Math.random() * WINDOW_WIDTH;
         }
-
-        // Card border
-        ctx.strokeStyle = isSelected ? opt.color : '#333333';
-        ctx.lineWidth = isSelected ? 3 : 2;
-        ctx.setLineDash([]);
-        ctx.strokeRect(x, cardY, cardWidth, cardHeight);
-
-        // Title
-        ctx.fillStyle = isSelected ? opt.color : '#cccccc';
-        ctx.font = isSelected ? 'bold 32px sans-serif' : '28px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(opt.title, x + cardWidth / 2, cardY + 50);
-
-        // Description
-        ctx.fillStyle = '#777777';
-        ctx.font = '20px sans-serif';
-        ctx.fillText(opt.desc, x + cardWidth / 2, cardY + 110);
-
-        // Number indicator
-        ctx.fillStyle = isSelected ? opt.color : '#555555';
-        ctx.font = 'bold 24px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`${i + 1}`, x + 20, cardY + 30);
       }
 
-      // Instructions
-      ctx.fillStyle = '#666666';
-      ctx.font = '20px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Use Arrow Keys or 1/2/3 to select • ENTER to start • E to exit', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80);
+      ctx.fillStyle = rgbToCSS(COLORS.BLACK);
+      ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+      // Draw background particles
+      for (const p of particles) {
+        drawCircle(ctx, p.x, p.y, p.size, p.color);
+      }
+
+      // Title with glow
+      for (let offset of [4, 2]) {
+        ctx.globalAlpha = 0.3;
+        drawCenteredText(ctx, 'FPS TESTER', 50, [50, 50, 0], 100);
+        ctx.globalAlpha = 1.0;
+      }
+      drawCenteredText(ctx, 'FPS TESTER', 50, COLORS.YELLOW, 100);
+
+      // Subtitle
+      drawCenteredText(ctx, 'Select test category or settings', 170, COLORS.WHITE, 28);
+
+      // FPS Tests box
+      const fps_color = highlight === 0 ? COLORS.CYAN : COLORS.WHITE;
+      const fps_box_color = highlight === 0 ? COLORS.CYAN : [100, 100, 100];
+      const fps_box_width = highlight === 0 ? 5 : 1;
+
+      ctx.strokeStyle = rgbToCSS(fps_box_color);
+      ctx.lineWidth = fps_box_width;
+      ctx.strokeRect(50, 250, 400, 180);
+
+      drawText(ctx, '1. FPS Tests', 80, 290, fps_color, 50);
+      drawText(ctx, 'Interactive game modes', 80, 340, COLORS.WHITE, 32);
+
+      // System Tests box
+      const sys_color = highlight === 1 ? COLORS.MAGENTA : COLORS.WHITE;
+      const sys_box_color = highlight === 1 ? COLORS.MAGENTA : [100, 100, 100];
+      const sys_box_width = highlight === 1 ? 5 : 1;
+
+      ctx.strokeStyle = rgbToCSS(sys_box_color);
+      ctx.lineWidth = sys_box_width;
+      ctx.strokeRect(500, 250, 400, 180);
+
+      drawText(ctx, '2. System Tests', 530, 290, sys_color, 50);
+      drawText(ctx, 'Monitor CPU/RAM/Disk', 530, 340, COLORS.WHITE, 32);
+
+      // Settings box
+      const set_color = highlight === 2 ? COLORS.GREEN : COLORS.WHITE;
+      const set_box_color = highlight === 2 ? COLORS.GREEN : [100, 100, 100];
+      const set_box_width = highlight === 2 ? 5 : 1;
+
+      ctx.strokeStyle = rgbToCSS(set_box_color);
+      ctx.lineWidth = set_box_width;
+      ctx.strokeRect(950, 250, 400, 180);
+
+      drawText(ctx, '3. Settings', 980, 290, set_color, 50);
+      drawText(ctx, 'Configure display', 980, 340, COLORS.WHITE, 32);
+
+      // Info
+      drawCenteredText(
+        ctx,
+        'Use ← → or A/D or ↑ ↓ to navigate | ENTER to select',
+        WINDOW_HEIGHT - 100,
+        COLORS.WHITE,
+        28
+      );
+      drawCenteredText(
+        ctx,
+        'Or press 1/2/3 | ESC to exit',
+        WINDOW_HEIGHT - 60,
+        COLORS.WHITE,
+        28
+      );
 
       if (animating) {
         requestAnimationFrame(drawMenu);
@@ -1364,7 +1277,7 @@ async function showMainMenu(canvas, ctx) {
         } else {
           resolve('settings');
         }
-      } else if (e.key === 'e' || e.key === 'E') {
+      } else if (e.code === 'Escape') {
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
         resolve(null);
@@ -1393,48 +1306,13 @@ async function showMainMenu(canvas, ctx) {
  */
 async function showResults(canvas, ctx, gameMode) {
   return new Promise((resolve) => {
-    // Get test statistics
-    const testStats = gameMode.getTestStatistics();
     const { avg: avg_fps, min: min_fps, max: max_fps } = gameMode.getStats();
-    
-    let status, status_color, recommendations;
-    
-    // Check if this is a system test
-    if (testStats.type === 'ram_test') {
-      // Memory test - use memory-based recommendations
-      status = testStats.status;
-      status_color = testStats.avg_memory <= 60 ? COLORS.GREEN : 
-                     testStats.avg_memory <= 85 ? COLORS.YELLOW : COLORS.RED;
-      recommendations = getMemoryGameRecommendations(testStats.avg_memory, testStats.difficulty);
-      
-      // Add memory stats at the beginning
-      let memStats = [];
-      memStats.push(`Memory Usage Results:`);
-      memStats.push(`  Average: ${Math.round(testStats.avg_memory)}%`);
-      memStats.push(`  Peak: ${Math.round(testStats.max_memory)}%`);
-      memStats.push(`  Minimum: ${Math.round(testStats.min_memory)}%`);
-      memStats.push('');
-      recommendations = memStats.concat(recommendations);
-    } else if (testStats.type === 'cpu_test') {
-      // CPU test
-      status = testStats.status;
-      status_color = testStats.avg_cpu <= 60 ? COLORS.GREEN : 
-                     testStats.avg_cpu <= 80 ? COLORS.YELLOW : COLORS.RED;
-      recommendations = [];
-      recommendations.push(`CPU Load Test Results:`);
-      recommendations.push(`  Average Load: ${Math.round(testStats.avg_cpu)}%`);
-      recommendations.push(`  Peak Load: ${Math.round(testStats.max_cpu)}%`);
-      recommendations.push(`  Minimum Load: ${Math.round(testStats.min_cpu)}%`);
-      recommendations.push('');
-      recommendations.push('✓ CPU is healthy if load stays under 85%');
-      recommendations.push('⚠ High load may indicate bottleneck or background processes');
-    } else {
-      // FPS/stress tests - use normal FPS-based recommendations
-      const result = getPerformanceRecommendations(avg_fps, min_fps, max_fps, gameMode.difficulty);
-      status = result.status;
-      status_color = result.status_color;
-      recommendations = result.recommendations;
-    }
+    const { status, status_color, recommendations } = getPerformanceRecommendations(
+      avg_fps,
+      min_fps,
+      max_fps,
+      gameMode.difficulty
+    );
 
     let scroll_offset = 0;
     let animating = true;
@@ -1452,33 +1330,23 @@ async function showResults(canvas, ctx, gameMode) {
       // Status
       drawCenteredText(ctx, status, 200, status_color, 70);
 
-      // Stats (different based on test type)
-      if (testStats.type === 'ram_test') {
-        const stats = testStats;
-        drawText(ctx, `Memory: ${Math.round(stats.avg_memory)}%`, 100, 310, COLORS.GREEN, 40);
-        drawText(ctx, `Peak: ${Math.round(stats.max_memory)}%`, 600, 310, stats.max_memory > 85 ? COLORS.RED : COLORS.YELLOW, 40);
-        drawText(ctx, `FPS Stability: ${Math.round(avg_fps)}`, 100, 380, COLORS.GREEN, 40);
-      } else if (testStats.type === 'cpu_test') {
-        const stats = testStats;
-        drawText(ctx, `CPU Load: ${Math.round(stats.avg_cpu)}%`, 100, 310, COLORS.GREEN, 40);
-        drawText(ctx, `Peak: ${Math.round(stats.max_cpu)}%`, 600, 310, stats.max_cpu > 85 ? COLORS.RED : COLORS.YELLOW, 40);
-        drawText(ctx, `FPS: ${Math.round(avg_fps)}`, 100, 380, COLORS.GREEN, 40);
-      } else {
-        // FPS stats
-        drawText(ctx, `Avg: ${Math.round(avg_fps)} FPS`, 100, 310, COLORS.GREEN, 40);
-        drawText(
-          ctx,
-          `Min: ${Math.round(min_fps)} FPS`,
-          600,
-          310,
-          min_fps < 60 ? COLORS.RED : COLORS.YELLOW,
-          40
-        );
-        drawText(ctx, `Max: ${Math.round(max_fps)} FPS`, 100, 380, COLORS.GREEN, 40);
-        const variance = max_fps - min_fps;
-        const variance_color = variance < 30 ? COLORS.GREEN : variance < 50 ? COLORS.YELLOW : COLORS.RED;
-        drawText(ctx, `Stability: ${Math.round(variance)} FPS variance`, 600, 380, variance_color, 40);
-      }
+      // FPS Stats
+      drawText(ctx, `Avg: ${Math.round(avg_fps)} FPS`, 100, 310, COLORS.GREEN, 40);
+      drawText(
+        ctx,
+        `Min: ${Math.round(min_fps)} FPS`,
+        600,
+        310,
+        min_fps < 60 ? COLORS.RED : COLORS.YELLOW,
+        40
+      );
+
+      drawText(ctx, `Max: ${Math.round(max_fps)} FPS`, 100, 380, COLORS.GREEN, 40);
+
+      const variance = max_fps - min_fps;
+      const variance_color =
+        variance < 30 ? COLORS.GREEN : variance < 50 ? COLORS.YELLOW : COLORS.RED;
+      drawText(ctx, `Stability: ${Math.round(variance)} FPS variance`, 600, 380, variance_color, 40);
 
       // Recommendations
       let y_pos = 480;
@@ -1504,7 +1372,7 @@ async function showResults(canvas, ctx, gameMode) {
       // Hint
       drawCenteredText(
         ctx,
-        'Press SPACE to return | ↑ ↓ to scroll | E to exit',
+        'Press SPACE to return | ↑ ↓ to scroll',
         WINDOW_HEIGHT - 50,
         COLORS.WHITE,
         28
@@ -1516,7 +1384,7 @@ async function showResults(canvas, ctx, gameMode) {
     }
 
     const handleKeyPress = (e) => {
-      if (e.code === 'Space' || e.code === 'Enter' || e.key === 'e' || e.key === 'E') {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
         e.preventDefault();
         animating = false;
         document.removeEventListener('keydown', handleKeyPress);
@@ -1597,151 +1465,8 @@ class FPSTesterApp {
         continue;
       }
 
-      // Run selected game mode and show results
-      let gameMode = null;
-      
-      if (category === 'fps') {
-        const testName = await this.selectFPSTest();
-        if (!testName) continue;
-        gameMode = this.createFPSTestInstance(testName);
-      } else if (category === 'system') {
-        const testName = await this.selectSystemTest();
-        if (!testName) continue;
-        gameMode = this.createSystemTestInstance(testName);
-      }
-      
-      if (gameMode) {
-        // Set parent reference for input handling
-        gameMode.parent = this;
-        
-        // Run the game mode
-        await gameMode.run(this.canvas, this.ctx);
-        
-        // Show results
-        await showResults(this.canvas, this.ctx, gameMode);
-      }
+      // TODO: Run game mode and show results
     }
-  }
-
-  createFPSTestInstance(testName) {
-    switch (testName) {
-      case 'ParticleStorm': return new ParticleStorm();
-      case 'PolygonRush': return new PolygonRush();
-      case 'MatrixRain': return new MatrixRain();
-      case 'InteractiveDraw': return new InteractiveDraw();
-      default: return null;
-    }
-  }
-
-  createSystemTestInstance(testName) {
-    switch (testName) {
-      case 'CPUTest': return new CPUTest();
-      case 'RAMTest': return new RAMTest();
-      default: return null;
-    }
-  }
-
-  async selectFPSTest() {
-    const tests = ['ParticleStorm', 'PolygonRush', 'MatrixRain', 'InteractiveDraw'];
-    return await this.selectTest('FPS Tests', tests);
-  }
-
-  async selectSystemTest() {
-    const tests = ['CPUTest', 'RAMTest'];
-    return await this.selectTest('System Tests', tests);
-  }
-
-  async selectTest(title, tests) {
-    return new Promise((resolve) => {
-      let highlight = 0;
-      let animating = true;
-
-      const drawMenu = () => {
-        // Clean background
-        this.ctx.fillStyle = '#0a0a0a';
-        this.ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-        // Title
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 70px sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(title, WINDOW_WIDTH / 2, 100);
-
-        // Subtitle
-        this.ctx.fillStyle = '#888888';
-        this.ctx.font = '28px sans-serif';
-        this.ctx.fillText('Choose a test', WINDOW_WIDTH / 2, 160);
-
-        // Draw test options
-        const startY = 240;
-        const spacing = 130;
-
-        for (let i = 0; i < tests.length; i++) {
-          const isSelected = i === highlight;
-          const y = startY + i * spacing;
-
-          // Card styling
-          const colors = ['#5ddde4', '#ff6b6b', '#51cf66', '#ffd43b'];
-          const color = colors[i % colors.length];
-
-          // Card background
-          if (isSelected) {
-            this.ctx.fillStyle = color;
-            this.ctx.globalAlpha = 0.1;
-            this.ctx.fillRect(150, y, WINDOW_WIDTH - 300, 100);
-            this.ctx.globalAlpha = 1.0;
-          }
-
-          // Card border
-          this.ctx.strokeStyle = isSelected ? color : '#333333';
-          this.ctx.lineWidth = isSelected ? 3 : 2;
-          this.ctx.strokeRect(150, y, WINDOW_WIDTH - 300, 100);
-
-          // Test name
-          this.ctx.fillStyle = isSelected ? color : '#cccccc';
-          this.ctx.font = isSelected ? 'bold 40px sans-serif' : '36px sans-serif';
-          this.ctx.textAlign = 'center';
-          this.ctx.fillText(`${i + 1}. ${tests[i]}`, WINDOW_WIDTH / 2, y + 60);
-        }
-
-        // Instructions
-        this.ctx.fillStyle = '#666666';
-        this.ctx.font = '20px sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('Use Arrow Keys or 1-' + tests.length + ' • ENTER to start • E to back', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80);
-
-        if (animating) {
-          requestAnimationFrame(drawMenu);
-        }
-      };
-
-      const handleKeyPress = (e) => {
-        if (e.code === 'ArrowUp') {
-          highlight = (highlight - 1 + tests.length) % tests.length;
-        } else if (e.code === 'ArrowDown') {
-          highlight = (highlight + 1) % tests.length;
-        } else if (e.code === 'Enter' || e.code === 'Space') {
-          e.preventDefault();
-          animating = false;
-          document.removeEventListener('keydown', handleKeyPress);
-          resolve(tests[highlight]);
-        } else if (e.key === 'e' || e.key === 'E') {
-          animating = false;
-          document.removeEventListener('keydown', handleKeyPress);
-          resolve(null);
-        } else if (/^[1-9]$/.test(e.key)) {
-          const idx = parseInt(e.key) - 1;
-          if (idx < tests.length) {
-            animating = false;
-            document.removeEventListener('keydown', handleKeyPress);
-            resolve(tests[idx]);
-          }
-        }
-      };
-
-      document.addEventListener('keydown', handleKeyPress);
-      drawMenu();
-    });
   }
 
   run() {
@@ -1765,7 +1490,6 @@ if (typeof window !== 'undefined') {
   window.RAMTest = RAMTest;
 }
 
-// Node.js export
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     FPSTesterApp,
