@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FPS Tester V2 Debug</title>
+</head>
+<body>
+    <pre id="log"></pre>
+    
+    <script>
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            logEl.textContent += msg + '\n';
+            console.log(msg);
+        }
+        
+        log('Starting...');
+        log('Before script load');
+        log('typeof window.FPSTesterApp = ' + typeof window.FPSTesterApp);
+    </script>
+    
+    <script src="fps_tester_v2.js"></script>
+    
+    <script>
+        log('After script load');
+        log('typeof window.FPSTesterApp = ' + typeof window.FPSTesterApp);
+        
+        if (typeof FPSTesterApp !== 'undefined') {
+            log('✓ FPSTesterApp found!');
+        } else {
+            log('✗ FPSTesterApp not found');
+            log('Window keys with "FPS": ' + Object.keys(window).filter(k => k.includes('FPS')).join(', '));
+            log('Window keys with "Game": ' + Object.keys(window).filter(k => k.includes('Game')).join(', '));
+        }
+    </script>
+</body>
+</html>
