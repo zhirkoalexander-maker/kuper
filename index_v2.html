@@ -15,7 +15,7 @@
     <canvas id="gameCanvas"></canvas>
     <div id="status">🔄 Loading fps_tester.js...</div>
 
-    <script src="fps_tester_v2.js" onload="window._scriptLoaded = true;" onerror="console.error('Script load error')"></script>
+    <script src="fps_tester_v2.js"></script>
     <script>
         // Setup canvas
         const canvas = document.getElementById('gameCanvas');
@@ -49,10 +49,13 @@
         
         function initApp() {
             statusMsg('⏳ Initializing app...');
+            console.log('typeof FPSTesterApp:', typeof FPSTesterApp);
+            console.log('window keys:', Object.keys(window).filter(k => k.includes('FPS') || k.includes('Test')).slice(0, 20));
             
             try {
                 if (typeof FPSTesterApp === 'undefined') {
                     statusMsg('✗ FPSTesterApp not found in window');
+                    console.error('Available in window:', Object.keys(window).filter(k => !k.startsWith('webkit')).slice(-50));
                     return;
                 }
                 
@@ -74,17 +77,8 @@
             }
         }
         
-        // Wait for script to load
-        let waitCount = 0;
-        const checkScript = setInterval(() => {
-            if (window._scriptLoaded || typeof FPSTesterApp !== 'undefined') {
-                clearInterval(checkScript);
-                initApp();
-            } else if (++waitCount > 50) {
-                clearInterval(checkScript);
-                statusMsg('✗ Script load timeout');
-            }
-        }, 100);
+        // Give script time to load then init
+        setTimeout(initApp, 500);
     </script>
 </body>
 </html>
