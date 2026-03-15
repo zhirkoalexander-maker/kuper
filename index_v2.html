@@ -3,82 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPS Tester</title>
+    <title>FPS Tester V2</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { width: 100%; height: 100%; background: #000; overflow: hidden; }
         #gameCanvas { display: block; margin: 0; padding: 0; }
-        #status { position: fixed; top: 20px; left: 20px; color: #0f0; font-family: monospace; font-size: 16px; z-index: 1000; text-shadow: 0 0 10px #0f0; }
+        #status { position: fixed; top: 20px; left: 20px; color: #0f0; font-family: monospace; font-size: 16px; z-index: 1000; text-shadow: 0 0 10px #0f0; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
-    <div id="status">🔄 Loading fps_tester.js...</div>
+    <div id="status">Loading...</div>
 
     <script src="fps_tester_v2.js"></script>
     <script>
-        // Setup canvas
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const statusEl = document.getElementById('status');
         
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        
-        function statusMsg(msg) {
-            document.getElementById('status').textContent = msg;
+        function status(msg) {
+            statusEl.textContent = msg;
             console.log(msg);
         }
         
-        function drawTestPattern() {
-            ctx.fillStyle = '#111111';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#0f0';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(50, 50, 200, 100);
-            ctx.fillStyle = '#0f0';
-            ctx.font = '20px monospace';
-            ctx.fillText('Canvas Ready', 100, 100);
-        }
+        // Resize canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
         
-        drawTestPattern();
-        statusMsg('✓ Canvas initialized, loading script...');
-        
-        function initApp() {
-            statusMsg('⏳ Initializing app...');
-            console.log('typeof FPSTesterApp:', typeof FPSTesterApp);
-            console.log('window keys:', Object.keys(window).filter(k => k.includes('FPS') || k.includes('Test')).slice(0, 20));
+        // Wait a bit for script to fully parse
+        setTimeout(() => {
+            status('Checking for FPSTesterApp...\n');
+            status('typeof FPSTesterApp = ' + typeof window.FPSTesterApp + '\n');
             
-            try {
-                if (typeof FPSTesterApp === 'undefined') {
-                    statusMsg('✗ FPSTesterApp not found in window');
-                    console.error('Available in window:', Object.keys(window).filter(k => !k.startsWith('webkit')).slice(-50));
-                    return;
-                }
-                
-                statusMsg('✓ FPSTesterApp found, creating instance...');
-                const app = new FPSTesterApp('gameCanvas');
-                
-                statusMsg('✓ Running app...');
-                app.run();
-                
-                setTimeout(() => {
-                    if (!document.getElementById('status').textContent.startsWith('✗')) {
-                        document.getElementById('status').style.display = 'none';
-                    }
-                }, 2000);
-                
-            } catch (e) {
-                statusMsg('✗ ' + e.message);
-                console.error('Init error:', e);
+            if (typeof FPSTesterApp === 'undefined') {
+                status('✗ FPSTesterApp NOT found in window\n');
+                status('Classes found in window:\n');
+                const classes = Object.keys(window).filter(k => k.match(/^[A-Z]/)).slice(0, 20);
+                status(classes.join('\n'));
+                return;
             }
-        }
-        
-        // Give script time to load then init
-        setTimeout(initApp, 500);
+            
+            status('✓ FPSTesterApp found!\n\nStarting app...\n');
+            try {
+                const app = new FPSTesterApp('gameCanvas');
+                app.run();
+                status(''); // Hide status on success
+            } catch (e) {
+                status('✗ Error: ' + e.message + '\n' + e.stack);
+            }
+        }, 200);
     </script>
 </body>
 </html>
