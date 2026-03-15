@@ -1753,21 +1753,16 @@ class FPSTesterApp {
 // EXPORT FOR HTML
 // ==========================
 
-// Browser global export - multiple attempts to ensure availability
+// Browser global export
 if (typeof window !== 'undefined') {
-  try {
-    window.FPSTesterApp = FPSTesterApp;
-    window.GameMode = GameMode;
-    window.ParticleStorm = ParticleStorm;
-    window.PolygonRush = PolygonRush;
-    window.MatrixRain = MatrixRain;
-    window.InteractiveDraw = InteractiveDraw;
-    window.CPUTest = CPUTest;
-    window.RAMTest = RAMTest;
-    console.log('✓ Classes exported to window');
-  } catch (e) {
-    console.error('✗ Export error:', e.message);
-  }
+  window.FPSTesterApp = FPSTesterApp;
+  window.GameMode = GameMode;
+  window.ParticleStorm = ParticleStorm;
+  window.PolygonRush = PolygonRush;
+  window.MatrixRain = MatrixRain;
+  window.InteractiveDraw = InteractiveDraw;
+  window.CPUTest = CPUTest;
+  window.RAMTest = RAMTest;
 }
 
 // Node.js export
