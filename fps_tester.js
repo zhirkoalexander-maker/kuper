@@ -785,34 +785,7 @@ async function showWelcomeScreen(canvas, ctx) {
       // Subtitle
       drawCenteredText(ctx, 'Performance Analysis Tool', 220, COLORS.YELLOW, 60);
 
-      // Info lines
-      const lines = [
-        '✓ Analyze your computer\'s gaming performance',
-        '✓ Test with interactive game modes',
-        '✓ Monitor CPU, RAM, and Disk I/O',
-        '✓ Get personalized recommendations',
-        '',
-        '🌐 Web version coming soon!',
-        '   Dual-screen architecture for weak PCs:',
-        '   - Test screen + Statistics screen',
-        '   - Automatic restart on crash',
-      ];
 
-      let y_pos = 330;
-      for (const line of lines) {
-        if (line === '') {
-          y_pos += 30;
-          continue;
-        }
-
-        const color = line.startsWith('🌐') || line.startsWith('   ')
-          ? COLORS.MAGENTA
-          : COLORS.GREEN;
-        const fontSize = line.startsWith('   ') ? 28 : 36;
-
-        drawCenteredText(ctx, line, y_pos, color, fontSize);
-        y_pos += 45;
-      }
 
       // Pulsing hint
       const pulse = Math.abs(Math.sin(alpha_timer * 0.05));
