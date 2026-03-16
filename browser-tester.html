@@ -334,9 +334,17 @@
     
     <div id="menu">
         <h1>⚡ FPS TESTER ⚡</h1>
+        <div style="font-size: 18px; color: var(--neon-cyan); margin: 40px 0; text-align: center; line-height: 1.6;">
+            Test your device's GPU and system performance<br>
+            with interactive stress tests and benchmarks
+        </div>
         <div class="menu-line cyan">> 1 - GPU TESTS</div>
         <div class="menu-line magenta">> 2 - SYSTEM TESTS</div>
         <div class="menu-line yellow">> 3 - RESULTS</div>
+        <div style="font-size: 14px; color: var(--neon-green); margin-top: 60px; text-align: center;">
+            Select difficulty (Easy/Medium/Hard) before running tests<br>
+            Each test runs for approximately 10 seconds
+        </div>
         <div class="footer">// Press [E] or [ESC] to EXIT //</div>
     </div>
     
@@ -380,6 +388,7 @@
         let history = loadHistory();
         let currentDifficulty = 'medium';
         let currentTestObj = null;
+        let testStartFrame = -1;
         
         const fpsTests = [
             { key: '1', name: '⚡ Particle Storm', id: 'particlestorm', desc: 'Extreme fill rate test', difficulties: { easy: 2000, medium: 5000, hard: 10000 } },
@@ -550,6 +559,7 @@
             maxFps = 0;
             avgFpsArray = [];
             testData = {};
+            testStartFrame = -1;
             
             document.getElementById('test-name').textContent = `${testName.toUpperCase()} [${currentDifficulty.toUpperCase()}]`;
             document.getElementById('exit-hint').textContent = '>> Press [E] or [ESC] to EXIT <<';
@@ -561,7 +571,7 @@
             const avgFps = avgFpsArray.length > 0 ? avgFpsArray.reduce((a,b)=>a+b)/avgFpsArray.length : fps;
             saveResult(document.getElementById('test-name').textContent, avgFps, minFps, maxFps);
             if (crashed) showCrashMessage();
-            else showTestResults(avgFps, minFps, maxFps);
+            else showTestResults(avgFps, minFps, maxFps, currentTest, testData, currentDifficulty);
         }
         
         function showCrashMessage() {
@@ -578,42 +588,115 @@
             document.getElementById('result-content').innerHTML = html;
         }
         
-        function showTestResults(avgFps, minFps, maxFps) {
+        function showTestResults(avgFps, minFps, maxFps, testId = null, testData = {}, difficulty = 'medium') {
             const menu = document.getElementById('menu');
             const results = document.getElementById('results');
             menu.classList.add('hide');
             results.classList.remove('hide');
             
-            let score = '❌ POOR';
-            let color = '#ff4444';
-            if (avgFps >= 120) { score = '✓ EXCELLENT'; color = '#00ff00'; }
-            else if (avgFps >= 90) { score = '✓ VERY GOOD'; color = '#00dd00'; }
-            else if (avgFps >= 60) { score = '✓ GOOD'; color = '#ffff00'; }
-            else if (avgFps >= 45) { score = '⚠ ACCEPTABLE'; color = '#ff9900'; }
-            else if (avgFps >= 30) { score = '✗ LOW'; color = '#ff6600'; }
+            // For system tests, show test-specific metrics
+            let metricsHtml = '';
+            if (testId === 'cputest' && testData.cpu) {
+                const cpuLoad = testData.cpu.progress || 0;
+                metricsHtml = `
+                    <div style="text-align: center; font-size: 48px;">
+                        <div style="color: var(--neon-cyan); margin: 30px 0;">CPU LOAD: <strong>${cpuLoad}%</strong></div>
+                        <div style="color: var(--neon-green); margin: 30px 0;">AVG FPS: <strong>${Math.round(avgFps)}</strong></div>
+                    </div>
+                `;
+            } else if (testId === 'ramtest' && testData.ram) {
+                const memUsed = Math.round((testData.ram.progress / 100) * 64);
+                metricsHtml = `
+                    <div style="text-align: center; font-size: 48px;">
+                        <div style="color: var(--neon-cyan); margin: 30px 0;">MEMORY: <strong>${memUsed}/64 MB</strong></div>
+                        <div style="color: var(--neon-green); margin: 30px 0;">AVG FPS: <strong>${Math.round(avgFps)}</strong></div>
+                    </div>
+                `;
+            } else if (testId === 'diskiotest' && testData.disk) {
+                const speed = testData.disk.speed || 0;
+                metricsHtml = `
+                    <div style="text-align: center; font-size: 48px;">
+                        <div style="color: var(--neon-cyan); margin: 30px 0;">SPEED: <strong>${speed} MB/s</strong></div>
+                        <div style="color: var(--neon-green); margin: 30px 0;">AVG FPS: <strong>${Math.round(avgFps)}</strong></div>
+                    </div>
+                `;
+            } else if (testId === 'systemmonitor' && testData.sys) {
+                const sys = testData.sys;
+                metricsHtml = `
+                    <div style="text-align: center; font-size: 36px;">
+                        <div style="color: var(--neon-cyan); margin: 20px 0;">CPU: <strong>${sys.cpu}%</strong></div>
+                        <div style="color: var(--neon-magenta); margin: 20px 0;">RAM: <strong>${sys.ram}%</strong></div>
+                        <div style="color: var(--neon-yellow); margin: 20px 0;">GPU: <strong>${sys.gpu}%</strong></div>
+                        <div style="color: #ff6666; margin: 20px 0;">TEMP: <strong>${sys.temp}°C</strong></div>
+                    </div>
+                `;
+            } else {
+                // FPS tests - show traditional FPS metrics
+                let score = '❌ POOR';
+                let color = '#ff4444';
+                if (avgFps >= 120) { score = '✓ EXCELLENT'; color = '#00ff00'; }
+                else if (avgFps >= 90) { score = '✓ VERY GOOD'; color = '#00dd00'; }
+                else if (avgFps >= 60) { score = '✓ GOOD'; color = '#ffff00'; }
+                else if (avgFps >= 45) { score = '⚠ ACCEPTABLE'; color = '#ff9900'; }
+                else if (avgFps >= 30) { score = '✗ LOW'; color = '#ff6600'; }
+                
+                metricsHtml = `
+                    <div style="text-align: center; padding: 60px 40px; color: ${color}; font-size: 72px; font-weight: bold;">${score}</div>
+                    <div style="text-align: center; font-size: 48px;">
+                        <div style="color: var(--neon-cyan); margin: 30px 0;">AVG: <strong>${Math.round(avgFps)}</strong> FPS</div>
+                        <div style="color: var(--neon-green); margin: 30px 0;">MAX: <strong>${Math.round(maxFps)}</strong> FPS</div>
+                        <div style="color: var(--neon-magenta); margin: 30px 0;">MIN: <strong>${Math.round(minFps)}</strong> FPS</div>
+                    </div>
+                `;
+            }
             
+            const recommendations = getRecommendations(avgFps, difficulty);
             const html = `
-                <div style="text-align: center; padding: 60px 40px; color: ${color}; font-size: 72px; font-weight: bold;">${score}</div>
-                <div style="text-align: center; font-size: 48px;">
-                    <div style="color: var(--neon-cyan); margin: 30px 0;">AVG: <strong>${Math.round(avgFps)}</strong> FPS</div>
-                    <div style="color: var(--neon-green); margin: 30px 0;">MAX: <strong>${Math.round(maxFps)}</strong> FPS</div>
-                    <div style="color: var(--neon-magenta); margin: 30px 0;">MIN: <strong>${Math.round(minFps)}</strong> FPS</div>
-                </div>
+                ${metricsHtml}
                 <div style="margin-top: 80px; text-align: center; font-size: 24px; color: var(--neon-yellow);">
-                    ${getRecommendations(avgFps)}
+                    ${recommendations}
                 </div>
                 <div style="margin-top: 60px; text-align: center; color: #888; font-size: 18px;">Press [E] or [ESC] to go back</div>
             `;
             document.getElementById('result-content').innerHTML = html;
         }
         
-        function getRecommendations(fps) {
-            if (fps >= 120) return '🎮 You can max out almost any game!';
-            if (fps >= 90) return '🎮 High-end gaming is possible';
-            if (fps >= 60) return '🎮 Good for most modern games';
-            if (fps >= 45) return '⚠️ Playable but may need to lower settings';
-            if (fps >= 30) return '⚠️ Lower settings recommended';
-            return '❌ Upgrade needed for smooth gaming';
+        function getRecommendations(fps, difficulty = 'medium') {
+            // Adjust thresholds based on difficulty
+            let easyThresholds = { excellent: 60, veryGood: 45, good: 30, acceptable: 20 };
+            let mediumThresholds = { excellent: 120, veryGood: 90, good: 60, acceptable: 45 };
+            let hardThresholds = { excellent: 240, veryGood: 180, good: 120, acceptable: 90 };
+            
+            let thresholds = mediumThresholds;
+            if (difficulty === 'easy') thresholds = easyThresholds;
+            else if (difficulty === 'hard') thresholds = hardThresholds;
+            
+            // Easy recommendations
+            if (difficulty === 'easy') {
+                if (fps >= thresholds.excellent) return '✓ Excellent! Your device handles light tasks with ease.';
+                if (fps >= thresholds.veryGood) return '✓ Very good! Browsing and basic apps run smoothly.';
+                if (fps >= thresholds.good) return '✓ Good for everyday tasks and web browsing.';
+                if (fps >= thresholds.acceptable) return '⚠️ Acceptable for basic usage, some lag possible.';
+                return '✗ Your device may struggle with smooth performance.';
+            }
+            
+            // Medium recommendations  
+            if (difficulty === 'medium') {
+                if (fps >= thresholds.excellent) return '✓ Excellent! You can max out almost any game!';
+                if (fps >= thresholds.veryGood) return '✓ Very good! High-end gaming is possible.';
+                if (fps >= thresholds.good) return '✓ Good for most modern games.';
+                if (fps >= thresholds.acceptable) return '⚠️ Playable but may need to lower settings.';
+                return '✗ Lower settings recommended for smooth gameplay.';
+            }
+            
+            // Hard recommendations
+            if (difficulty === 'hard') {
+                if (fps >= thresholds.excellent) return '✓ Exceptional! Perfect for ultra-demanding titles!';
+                if (fps >= thresholds.veryGood) return '✓ Great! Can handle demanding games at high settings.';
+                if (fps >= thresholds.good) return '✓ Good performance on demanding workloads.';
+                if (fps >= thresholds.acceptable) return '⚠️ Manageable but will need moderate settings adjustments.';
+                return '✗ Significant performance tuning needed for demanding tasks.';
+            }
         }
         
         function exitApp() {
@@ -1060,6 +1143,13 @@
                     }
                     fpsCounter = 0;
                     lastTime = now;
+                }
+                
+                // Auto-complete system tests after 600 frames (10 seconds at 60fps)
+                if (running && (currentTest === 'cputest' || currentTest === 'ramtest' || currentTest === 'diskiotest' || currentTest === 'systemmonitor')) {
+                    if (frameCount > 600) {
+                        stopTest();
+                    }
                 }
                 
                 if (running && tests[currentTest]) {
