@@ -24,15 +24,14 @@ Just open `browser-tester.html` in your browser. Works offline.
 ## Controls
 
 - Numbers/Letters to pick a test
-- ESC to exit or stop test
+- 
 - E also exits (in web version)
 - S for settings (Python only)
 
 ## Keys during test
 
 | Key | What |
-|-----|------|
-| ESC | Stop test |
+|-----|------||
 | E | Exit (web) |
 | S | Settings |
 
