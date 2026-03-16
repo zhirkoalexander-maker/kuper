@@ -341,7 +341,7 @@
         <div class="menu-line cyan">> 1 - GPU TESTS</div>
         <div class="menu-line magenta">> 2 - SYSTEM TESTS</div>
         <div class="menu-line yellow">> 3 - RESULTS</div>
-        <div class="footer">// Press [E] or [ESC] to EXIT //</div>
+        <div class="footer">// Press [E] or [SPACE] to EXIT //</div>
     </div>
     
     <div id="fps-menu" class="hide">
@@ -558,7 +558,7 @@
             testStartFrame = -1;
             
             document.getElementById('test-name').textContent = `${testName.toUpperCase()} [${currentDifficulty.toUpperCase()}]`;
-            document.getElementById('exit-hint').textContent = '>> Press [E] or [ESC] to EXIT <<';
+            document.getElementById('exit-hint').textContent = '>> Press [E] or [SPACE] to EXIT <<';
         }
         
         function stopTest(crashed = false) {
