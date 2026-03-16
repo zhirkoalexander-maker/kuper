@@ -820,7 +820,7 @@ async function showWelcomeScreen(canvas, ctx) {
 
       drawCenteredText(
         ctx,
-        'Press SPACE to continue',
+        'Press E or SPACE to continue',
         WINDOW_HEIGHT - 100,
         [brightness, brightness, brightness],
         48
@@ -946,7 +946,7 @@ async function showMainMenu(canvas, ctx) {
       );
       drawCenteredText(
         ctx,
-        'Or press 1/2/3 | ESC to exit',
+        'Press E or ESC to escape',
         WINDOW_HEIGHT - 60,
         COLORS.WHITE,
         28
@@ -1071,7 +1071,7 @@ async function showResults(canvas, ctx, gameMode) {
       // Hint
       drawCenteredText(
         ctx,
-        'Press SPACE to return | ↑ ↓ to scroll',
+        'Press E or SPACE to return | ↑ ↓ to scroll',
         WINDOW_HEIGHT - 50,
         COLORS.WHITE,
         28
