@@ -351,19 +351,19 @@
     <div id="fps-menu" class="hide">
         <h1>⚙️ GPU STRESS TESTS ⚙️</h1>
         <div id="fps-list"></div>
-        <div class="footer">// Press [E] or [ESC] to go back //</div>
+        <div class="footer">// Press [E] or [SPACE] to go back //</div>
     </div>
     
     <div id="system-menu" class="hide">
         <h1>🖥️ SYSTEM MONITOR 🖥️</h1>
         <div id="system-list"></div>
-        <div class="footer">// Press [E] or [ESC] to go back //</div>
+        <div class="footer">// Press [E] or [SPACE] to go back //</div>
     </div>
     
     <div id="results" class="hide">
         <h1>📊 TEST RESULTS 📊</h1>
         <div id="result-content"></div>
-        <div class="footer">// Press [E] or [ESC] to go back //</div>
+        <div class="footer">// Press [E] or [SPACE] to go back //</div>
     </div>
 
     <script>
@@ -583,7 +583,7 @@
             const html = `
                 <div style="text-align: center; padding: 80px 40px; color: #ff6666; font-size: 56px; font-weight: bold;">💥 SORRY 💥</div>
                 <div style="text-align: center; padding: 40px; color: #ff6666; font-size: 32px;">YOUR GAME CRASHED</div>
-                <div style="margin-top: 100px; text-align: center; color: #888; font-size: 16px;">Press [E] or [ESC] to go back</div>
+                <div style="margin-top: 100px; text-align: center; color: #888; font-size: 16px;">Press [E] or [SPACE] to go back</div>
             `;
             document.getElementById('result-content').innerHTML = html;
         }
@@ -656,7 +656,7 @@
                 <div style="margin-top: 80px; text-align: center; font-size: 24px; color: var(--neon-yellow);">
                     ${recommendations}
                 </div>
-                <div style="margin-top: 60px; text-align: center; color: #888; font-size: 18px;">Press [E] or [ESC] to go back</div>
+                <div style="margin-top: 60px; text-align: center; color: #888; font-size: 18px;">Press [E] or [SPACE] to go back</div>
             `;
             document.getElementById('result-content').innerHTML = html;
         }
